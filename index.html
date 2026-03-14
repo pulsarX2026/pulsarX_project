@@ -1,11 +1,1363 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<title>PulsarX</title>
-</head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRM Básico - Aprende HTML, CSS y JS</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
+  <!-- ============================================================
+       SECCIÓN 1: ESTILOS CSS
+       Aquí se definen los colores, tamaños, animaciones y la
+       apariencia general de toda la aplicación.
+  ============================================================ -->
+  <style>
+    /* --- Variables CSS: Paleta de colores y medidas globales --- */
+    :root {
+      --color-fondo:        #0f1117;
+      --color-sidebar:      #161b27;
+      --color-header:       #1a2032;
+      --color-tarjeta:      #1e2536;
+      --color-borde:        #2a3248;
+      --color-acento:       #4f8ef7;
+      --color-acento2:      #38d9a9;
+      --color-texto:        #e2e8f0;
+      --color-texto-suave:  #7c8db5;
+      --color-peligro:      #fc5c7d;
+      --color-advertencia:  #f6c90e;
+      --ancho-sidebar:      240px;
+      --alto-header:        60px;
+      --radio-borde:        8px;
+      --fuente-principal:   'IBM Plex Sans', sans-serif;
+      --fuente-codigo:      'IBM Plex Mono', monospace;
+    }
+
+    /* --- Reset básico: elimina márgenes/paddings por defecto --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box; /* El padding no agranda el elemento */
+    }
+
+    body {
+      font-family: var(--fuente-principal);
+      background-color: var(--color-fondo);
+      color: var(--color-texto);
+      display: flex;            /* Activa Flexbox en el body */
+      min-height: 100vh;        /* Ocupa al menos toda la pantalla */
+    }
+
+    /* ============================================================
+       SIDEBAR (Barra lateral de navegación)
+    ============================================================ */
+    #sidebar {
+      width: var(--ancho-sidebar);
+      background-color: var(--color-sidebar);
+      border-right: 1px solid var(--color-borde);
+      display: flex;
+      flex-direction: column;   /* Apila elementos en columna */
+      position: fixed;          /* Se queda fija aunque se scrollee */
+      top: 0;
+      left: 0;
+      height: 100vh;            /* Toda la altura de la ventana */
+      z-index: 100;
+      transition: transform 0.3s ease; /* Animación para ocultar/mostrar */
+    }
+
+    /* Logo / Marca en el Sidebar */
+    .sidebar-logo {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-borde);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo .icono-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--color-acento), var(--color-acento2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .sidebar-logo span {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Menú de navegación */
+    .sidebar-nav {
+      padding: 16px 0;
+      flex: 1; /* Ocupa el espacio disponible */
+    }
+
+    .nav-seccion-titulo {
+      font-size: 10px;
+      font-family: var(--fuente-codigo);
+      color: var(--color-texto-suave);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 8px 24px 4px;
+      margin-top: 8px;
+    }
+
+    /* Cada enlace del menú */
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      color: var(--color-texto-suave);
+      cursor: pointer;          /* El cursor cambia a manito */
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+      user-select: none;        /* No se puede seleccionar el texto */
+    }
+
+    .nav-item:hover {
+      background-color: rgba(79, 142, 247, 0.08);
+      color: var(--color-texto);
+    }
+
+    /* Clase que se agrega con JS al item activo */
+    .nav-item.activo {
+      background-color: rgba(79, 142, 247, 0.12);
+      color: var(--color-acento);
+      border-left-color: var(--color-acento);
+    }
+
+    .nav-item .nav-icono { font-size: 16px; }
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: var(--color-acento);
+      color: white;
+      font-size: 10px;
+      font-family: var(--fuente-codigo);
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    /* Info de usuario al final del sidebar */
+    .sidebar-usuario {
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-borde);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c63ff, var(--color-acento2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .usuario-info { line-height: 1.3; }
+    .usuario-nombre { font-size: 13px; font-weight: 600; }
+    .usuario-rol    { font-size: 11px; color: var(--color-texto-suave); }
+
+    /* ============================================================
+       ÁREA PRINCIPAL (todo excepto el sidebar)
+    ============================================================ */
+    #contenido-principal {
+      margin-left: var(--ancho-sidebar); /* Deja espacio para el sidebar fijo */
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       HEADER (Barra superior)
+    ============================================================ */
+    #header {
+      height: var(--alto-header);
+      background-color: var(--color-header);
+      border-bottom: 1px solid var(--color-borde);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;         /* Se queda pegado al hacer scroll */
+      top: 0;
+      z-index: 90;
+    }
+
+    .header-izquierda {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Botón hamburguesa (visible solo en móvil) */
+    #btn-menu {
+      background: none;
+      border: none;
+      color: var(--color-texto-suave);
+      cursor: pointer;
+      font-size: 18px;
+      display: none;            /* Oculto por defecto */
+    }
+
+    .header-titulo {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-texto);
+    }
+
+    .header-ruta {
+      font-size: 12px;
+      color: var(--color-texto-suave);
+      font-family: var(--fuente-codigo);
+    }
+
+    .header-derecha {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Barra de búsqueda del header */
+    .header-busqueda {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-tarjeta);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 6px 12px;
+    }
+
+    .header-busqueda input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--color-texto);
+      font-size: 13px;
+      width: 180px;
+      font-family: var(--fuente-principal);
+    }
+
+    .header-busqueda input::placeholder { color: var(--color-texto-suave); }
+
+    /* ============================================================
+       SECCIÓN PRINCIPAL DE CONTENIDO
+    ============================================================ */
+    #seccion-contenido {
+      padding: 28px;
+      flex: 1;
+    }
+
+    /* Tarjeta contenedora */
+    .tarjeta {
+      background: var(--color-tarjeta);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      overflow: hidden;
+    }
+
+    /* Cabecera de la tarjeta */
+    .tarjeta-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-borde);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .tarjeta-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .tarjeta-header p {
+      font-size: 12px;
+      color: var(--color-texto-suave);
+      font-family: var(--fuente-codigo);
+      margin-top: 2px;
+    }
+
+    /* ============================================================
+       BOTONES
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radio-borde);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--fuente-principal);
+      transition: all 0.2s;
+    }
+
+    .btn-primario {
+      background: var(--color-acento);
+      color: white;
+    }
+    .btn-primario:hover { background: #3d78e0; transform: translateY(-1px); }
+
+    .btn-secundario {
+      background: transparent;
+      color: var(--color-texto);
+      border: 1px solid var(--color-borde);
+    }
+    .btn-secundario:hover { background: rgba(255,255,255,0.05); }
+
+    .btn-peligro {
+      background: transparent;
+      color: var(--color-peligro);
+      border: 1px solid var(--color-peligro);
+    }
+    .btn-peligro:hover { background: rgba(252, 92, 125, 0.1); }
+
+    .btn-exito {
+      background: var(--color-acento2);
+      color: #0f1117;
+    }
+    .btn-exito:hover { background: #2bc49a; }
+
+    /* ============================================================
+       TARJETAS DE ESTADÍSTICAS (KPIs)
+    ============================================================ */
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-tarjeta {
+      background: var(--color-tarjeta);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-tarjeta::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .stat-tarjeta.azul::before   { background: var(--color-acento); }
+    .stat-tarjeta.verde::before  { background: var(--color-acento2); }
+    .stat-tarjeta.rojo::before   { background: var(--color-peligro); }
+    .stat-tarjeta.amarillo::before { background: var(--color-advertencia); }
+
+    .stat-icono {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    .stat-valor {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--fuente-codigo);
+      line-height: 1;
+    }
+    .stat-etiqueta {
+      font-size: 12px;
+      color: var(--color-texto-suave);
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       TABLA DEL CRUD
+    ============================================================ */
+    .contenedor-tabla { overflow-x: auto; } /* Scroll horizontal en móvil */
+
+    table {
+      width: 100%;
+      border-collapse: collapse; /* Elimina espacio entre celdas */
+      font-size: 13px;
+    }
+
+    thead th {
+      background: rgba(0,0,0,0.2);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-family: var(--fuente-codigo);
+      color: var(--color-texto-suave);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--color-borde);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(42, 50, 72, 0.6);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: rgba(79, 142, 247, 0.05); }
+
+    tbody td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    /* Celda con avatar + nombre */
+    .celda-cliente {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar-tabla {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Chips / badges de estado */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--fuente-codigo);
+    }
+
+    .chip::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .chip-activo   { background: rgba(56,217,169,0.12); color: var(--color-acento2); }
+    .chip-activo::before { background: var(--color-acento2); }
+
+    .chip-pendiente { background: rgba(246,201,14,0.12); color: var(--color-advertencia); }
+    .chip-pendiente::before { background: var(--color-advertencia); }
+
+    .chip-inactivo { background: rgba(252,92,125,0.12); color: var(--color-peligro); }
+    .chip-inactivo::before { background: var(--color-peligro); }
+
+    .acciones-celda {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Botones pequeños para la tabla */
+    .btn-icono {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid var(--color-borde);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+      color: var(--color-texto-suave);
+    }
+
+    .btn-icono:hover { background: rgba(255,255,255,0.08); color: var(--color-texto); }
+    .btn-icono.editar:hover  { border-color: var(--color-acento); color: var(--color-acento); }
+    .btn-icono.eliminar:hover { border-color: var(--color-peligro); color: var(--color-peligro); }
+
+    /* ============================================================
+       MODAL (Ventana emergente para el formulario)
+    ============================================================ */
+    .overlay {
+      display: none;            /* Oculto por defecto */
+      position: fixed;          /* Cubre toda la pantalla */
+      inset: 0;                 /* top/right/bottom/left = 0 */
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Cuando se agrega clase 'visible' con JS, se muestra */
+    .overlay.visible {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .modal {
+      background: var(--color-header);
+      border: 1px solid var(--color-borde);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-borde);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 { font-size: 15px; font-weight: 600; }
+
+    .btn-cerrar {
+      background: none;
+      border: none;
+      color: var(--color-texto-suave);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+    .btn-cerrar:hover { color: var(--color-texto); }
+
+    .modal-cuerpo { padding: 24px; }
+
+    /* ============================================================
+       FORMULARIO
+    ============================================================ */
+    .grupo-form {
+      margin-bottom: 16px;
+    }
+
+    .grupo-form label {
+      display: block;
+      font-size: 12px;
+      font-family: var(--fuente-codigo);
+      color: var(--color-texto-suave);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Aplica a input, select y textarea */
+    .grupo-form input,
+    .grupo-form select,
+    .grupo-form textarea {
+      width: 100%;
+      background: var(--color-fondo);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 10px 12px;
+      color: var(--color-texto);
+      font-size: 13px;
+      font-family: var(--fuente-principal);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .grupo-form input:focus,
+    .grupo-form select:focus,
+    .grupo-form textarea:focus {
+      border-color: var(--color-acento);
+    }
+
+    .grupo-form select option { background: #1e2536; }
+    .grupo-form textarea { resize: vertical; min-height: 80px; }
+
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .modal-pie {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-borde);
+    }
+
+    /* ============================================================
+       TOAST / NOTIFICACIÓN
+    ============================================================ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--color-acento2);
+      color: #0f1117;
+      padding: 12px 20px;
+      border-radius: var(--radio-borde);
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(80px); /* Empieza abajo (oculto) */
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    #toast.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ============================================================
+       BARRA DE HERRAMIENTAS SOBRE LA TABLA
+    ============================================================ */
+    .barra-herramientas {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--color-borde);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .barra-busqueda {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-fondo);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 7px 12px;
+      flex: 1;
+      max-width: 320px;
+    }
+
+    .barra-busqueda input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--color-texto);
+      font-size: 13px;
+      width: 100%;
+      font-family: var(--fuente-principal);
+    }
+
+    .barra-busqueda input::placeholder { color: var(--color-texto-suave); }
+
+    .contador-registros {
+      font-size: 12px;
+      color: var(--color-texto-suave);
+      font-family: var(--fuente-codigo);
+      margin-left: auto;
+    }
+
+    /* ============================================================
+       RESPONSIVE: Ajustes para pantallas pequeñas
+    ============================================================ */
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(-100%); /* Oculta el sidebar fuera de la pantalla */
+      }
+
+      #sidebar.abierto {
+        transform: translateX(0); /* Lo vuelve a mostrar */
+      }
+
+      #contenido-principal {
+        margin-left: 0; /* Sin margen cuando el sidebar está oculto */
+      }
+
+      #btn-menu {
+        display: block; /* Muestra el botón hamburguesa */
+      }
+
+      .grid-2-col {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
+      }
+
+      #seccion-contenido { padding: 16px; }
+    }
+  </style>
+</head>
 <body>
-<h1>PulsarX version 1.2.1</h1>
-<p>Proyecto PulsarX CRM - ERP</p>
+
+  <!-- ============================================================
+       SIDEBAR - Barra de navegación lateral
+  ============================================================ -->
+  <aside id="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="icono-logo">💼</div>
+      <span>MiCRM</span>
+    </div>
+
+    <!-- Menú de navegación -->
+    <nav class="sidebar-nav">
+      <div class="nav-seccion-titulo">Principal</div>
+
+      <!-- Cada nav-item llama a mostrarSeccion() con JS -->
+      <div class="nav-item activo" onclick="mostrarSeccion('dashboard')">
+        <span class="nav-icono">📊</span>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="mostrarSeccion('clientes')">
+        <span class="nav-icono">👥</span>
+        <span>Clientes</span>
+        <span class="nav-badge" id="badge-clientes">0</span>
+      </div>
+
+      <div class="nav-seccion-titulo">Más</div>
+      <div class="nav-item" onclick="mostrarSeccion('reportes')">
+        <span class="nav-icono">📈</span>
+        <span>Reportes</span>
+      </div>
+      <div class="nav-item" onclick="mostrarSeccion('config')">
+        <span class="nav-icono">⚙️</span>
+        <span>Configuración</span>
+      </div>
+    </nav>
+
+    <!-- Usuario -->
+    <div class="sidebar-usuario">
+      <div class="avatar">AD</div>
+      <div class="usuario-info">
+        <div class="usuario-nombre">Admin</div>
+        <div class="usuario-rol">Administrador</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL
+  ============================================================ -->
+  <div id="contenido-principal">
+
+    <!-- HEADER -->
+    <header id="header">
+      <div class="header-izquierda">
+        <!-- Botón hamburguesa para móvil -->
+        <button id="btn-menu" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="header-titulo" id="header-titulo">Dashboard</div>
+          <div class="header-ruta" id="header-ruta">/ inicio</div>
+        </div>
+      </div>
+      <div class="header-derecha">
+        <div class="header-busqueda">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." />
+        </div>
+        <div class="avatar" style="cursor:pointer">AD</div>
+      </div>
+    </header>
+
+    <!-- SECCIÓN DE CONTENIDO (se intercambia con JS) -->
+    <main id="seccion-contenido">
+
+      <!-- ======================================================
+           VISTA: DASHBOARD
+      ====================================================== -->
+      <div id="vista-dashboard">
+
+        <!-- Tarjetas de estadísticas -->
+        <div class="grid-stats">
+          <div class="stat-tarjeta azul">
+            <div class="stat-icono">👥</div>
+            <div class="stat-valor" id="stat-total">0</div>
+            <div class="stat-etiqueta">Total Clientes</div>
+          </div>
+          <div class="stat-tarjeta verde">
+            <div class="stat-icono">✅</div>
+            <div class="stat-valor" id="stat-activos">0</div>
+            <div class="stat-etiqueta">Activos</div>
+          </div>
+          <div class="stat-tarjeta amarillo">
+            <div class="stat-icono">⏳</div>
+            <div class="stat-valor" id="stat-pendientes">0</div>
+            <div class="stat-etiqueta">Pendientes</div>
+          </div>
+          <div class="stat-tarjeta rojo">
+            <div class="stat-icono">❌</div>
+            <div class="stat-valor" id="stat-inactivos">0</div>
+            <div class="stat-etiqueta">Inactivos</div>
+          </div>
+        </div>
+
+        <!-- Tabla resumida en Dashboard -->
+        <div class="tarjeta">
+          <div class="tarjeta-header">
+            <div>
+              <h2>Clientes Recientes</h2>
+              <p>Últimos 5 registros</p>
+            </div>
+            <button class="btn btn-primario" onclick="mostrarSeccion('clientes')">
+              Ver todos →
+            </button>
+          </div>
+          <div class="contenedor-tabla">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Email</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-dashboard">
+                <!-- Llenada con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           VISTA: CLIENTES (CRUD completo)
+      ====================================================== -->
+      <div id="vista-clientes" style="display:none">
+        <div class="tarjeta">
+          <div class="tarjeta-header">
+            <div>
+              <h2>Gestión de Clientes</h2>
+              <p>CRUD — Crear, Leer, Actualizar, Eliminar</p>
+            </div>
+            <button class="btn btn-primario" onclick="abrirModalCrear()">
+              + Nuevo Cliente
+            </button>
+          </div>
+
+          <!-- Barra de búsqueda y filtros -->
+          <div class="barra-herramientas">
+            <div class="barra-busqueda">
+              <span>🔍</span>
+              <input type="text" id="input-busqueda" placeholder="Buscar por nombre, email..."
+                     oninput="filtrarTabla()" />
+            </div>
+
+            <!-- Filtro por estado (SELECT) -->
+            <select id="filtro-estado" onchange="filtrarTabla()"
+              style="background:var(--color-fondo);border:1px solid var(--color-borde);
+                     border-radius:var(--radio-borde);padding:7px 12px;
+                     color:var(--color-texto);font-size:13px;cursor:pointer;">
+              <option value="">Todos los estados</option>
+              <option value="activo">Activo</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+
+            <span class="contador-registros" id="contador">0 registros</span>
+          </div>
+
+          <!-- Tabla principal de clientes -->
+          <div class="contenedor-tabla">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cliente</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Empresa</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-clientes">
+                <!-- Llenada dinámicamente con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           VISTA: REPORTES (placeholder)
+      ====================================================== -->
+      <div id="vista-reportes" style="display:none">
+        <div class="tarjeta" style="padding:60px;text-align:center">
+          <div style="font-size:48px;margin-bottom:16px">📈</div>
+          <h2 style="margin-bottom:8px">Reportes</h2>
+          <p style="color:var(--color-texto-suave)">
+            Esta sección estará disponible próximamente.<br>
+            Practica agregando aquí tus propias gráficas con Chart.js o D3.js.
+          </p>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           VISTA: CONFIGURACIÓN (placeholder)
+      ====================================================== -->
+      <div id="vista-config" style="display:none">
+        <div class="tarjeta" style="padding:60px;text-align:center">
+          <div style="font-size:48px;margin-bottom:16px">⚙️</div>
+          <h2 style="margin-bottom:8px">Configuración</h2>
+          <p style="color:var(--color-texto-suave)">
+            Aquí puedes agregar opciones de configuración del sistema.<br>
+            Practica creando formularios con inputs, checkboxes y toggles.
+          </p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Formulario para Crear / Editar cliente
+  ============================================================ -->
+  <div class="overlay" id="overlay-modal" onclick="cerrarModalSiClickFuera(event)">
+    <div class="modal" id="modal">
+
+      <div class="modal-header">
+        <h3 id="modal-titulo">Nuevo Cliente</h3>
+        <button class="btn-cerrar" onclick="cerrarModal()">×</button>
+      </div>
+
+      <div class="modal-cuerpo">
+        <!-- El atributo 'id' permite acceder al campo con JavaScript -->
+        <div class="grid-2-col">
+          <div class="grupo-form">
+            <label for="campo-nombre">Nombre</label>
+            <input type="text" id="campo-nombre" placeholder="Ej: Ana García" />
+          </div>
+          <div class="grupo-form">
+            <label for="campo-apellido">Apellido</label>
+            <input type="text" id="campo-apellido" placeholder="Ej: López" />
+          </div>
+        </div>
+
+        <div class="grupo-form">
+          <label for="campo-email">Correo Electrónico</label>
+          <input type="email" id="campo-email" placeholder="ana@empresa.com" />
+        </div>
+
+        <div class="grid-2-col">
+          <div class="grupo-form">
+            <label for="campo-telefono">Teléfono</label>
+            <input type="tel" id="campo-telefono" placeholder="+51 999 000 000" />
+          </div>
+          <div class="grupo-form">
+            <label for="campo-empresa">Empresa</label>
+            <input type="text" id="campo-empresa" placeholder="Empresa S.A." />
+          </div>
+        </div>
+
+        <div class="grupo-form">
+          <!-- SELECT: lista desplegable -->
+          <label for="campo-estado">Estado</label>
+          <select id="campo-estado">
+            <option value="activo">Activo</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+
+        <div class="grupo-form">
+          <label for="campo-notas">Notas</label>
+          <textarea id="campo-notas" placeholder="Notas adicionales sobre el cliente..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-pie">
+        <button class="btn btn-secundario" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-exito" onclick="guardarCliente()">💾 Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast de notificación -->
+  <div id="toast">✓ Operación exitosa</div>
+
+
+  <!-- ============================================================
+       SECCIÓN 2: JAVASCRIPT
+       Aquí está toda la lógica de la aplicación.
+       Lee los comentarios para entender cada parte.
+  ============================================================ -->
+  <script>
+
+    // ===========================================================
+    // DATOS: Array de objetos (simula una base de datos)
+    // Cada objeto representa un cliente con sus propiedades.
+    // ===========================================================
+    let clientes = [
+      { id: 1, nombre: "Ana",    apellido: "García",   email: "ana@empresa.com",    telefono: "+51 999 111 222", empresa: "TechPeru SAC",    estado: "activo",    notas: "Cliente desde 2022" },
+      { id: 2, nombre: "Luis",   apellido: "Quispe",   email: "luis@gmail.com",     telefono: "+51 998 222 333", empresa: "Soluciones SRL",  estado: "pendiente", notas: "" },
+      { id: 3, nombre: "María",  apellido: "Torres",   email: "maria@corp.pe",      telefono: "+51 997 333 444", empresa: "CorpLima SA",     estado: "activo",    notas: "Renovación en diciembre" },
+      { id: 4, nombre: "Carlos", apellido: "Mendoza",  email: "carlos@negocios.pe", telefono: "+51 996 444 555", empresa: "Negocios Andes",  estado: "inactivo",  notas: "Dar seguimiento" },
+      { id: 5, nombre: "Rosa",   apellido: "Vargas",   email: "rosa@digital.com",   telefono: "+51 995 555 666", empresa: "Digital Works",   estado: "activo",    notas: "" },
+    ];
+
+    // Variable para saber qué cliente se está editando (null = crear nuevo)
+    let idEditando = null;
+
+    // Contador para generar IDs únicos automáticamente
+    let siguienteId = 6;
+
+
+    // ===========================================================
+    // FUNCIÓN: Renderizar tabla de clientes
+    // Lee el array 'clientes', filtra según búsqueda,
+    // y construye el HTML de la tabla dinámicamente.
+    // ===========================================================
+    function renderizarTabla() {
+      // Obtiene el valor del input de búsqueda (o "" si no existe)
+      const busqueda = (document.getElementById('input-busqueda')?.value || '').toLowerCase();
+      const filtroEstado = document.getElementById('filtro-estado')?.value || '';
+
+      // FILTER: crea un nuevo array con los clientes que cumplan la condición
+      const clientesFiltrados = clientes.filter(c => {
+        const textoCompleto = `${c.nombre} ${c.apellido} ${c.email} ${c.empresa}`.toLowerCase();
+        const coincideTexto  = textoCompleto.includes(busqueda);
+        const coincideEstado = filtroEstado === '' || c.estado === filtroEstado;
+        return coincideTexto && coincideEstado; // Ambas condiciones deben cumplirse
+      });
+
+      // Selecciona el <tbody> de la tabla
+      const tbody = document.getElementById('tabla-clientes');
+
+      // Si no hay resultados, muestra un mensaje
+      if (clientesFiltrados.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center;padding:40px;color:var(--color-texto-suave)">
+              Sin resultados para tu búsqueda
+            </td>
+          </tr>`;
+        document.getElementById('contador').textContent = '0 registros';
+        return;
+      }
+
+      // MAP: convierte cada cliente en una fila HTML (<tr>)
+      // Los backticks ` ` permiten usar variables dentro del HTML (template literals)
+      tbody.innerHTML = clientesFiltrados.map(c => `
+        <tr>
+          <td style="font-family:var(--fuente-codigo);color:var(--color-texto-suave);font-size:12px">
+            #${c.id}
+          </td>
+          <td>
+            <div class="celda-cliente">
+              <div class="avatar-tabla" style="background:${colorAvatar(c.nombre)}">
+                ${iniciales(c.nombre, c.apellido)}
+              </div>
+              <div>
+                <div style="font-weight:600">${c.nombre} ${c.apellido}</div>
+                ${c.notas ? `<div style="font-size:11px;color:var(--color-texto-suave)">${c.notas}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--color-texto-suave)">${c.email}</td>
+          <td>${c.telefono}</td>
+          <td>${c.empresa}</td>
+          <td>${chipEstado(c.estado)}</td>
+          <td>
+            <div class="acciones-celda">
+              <!-- onclick llama a editarCliente con el ID del cliente -->
+              <button class="btn-icono editar"  onclick="editarCliente(${c.id})" title="Editar">✏️</button>
+              <button class="btn-icono eliminar" onclick="eliminarCliente(${c.id})" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join(''); // .join('') une el array de strings en uno solo
+
+      // Actualiza el contador de registros
+      document.getElementById('contador').textContent = `${clientesFiltrados.length} registros`;
+    }
+
+
+    // ===========================================================
+    // FUNCIÓN: Renderizar tabla resumida del Dashboard
+    // ===========================================================
+    function renderizarDashboard() {
+      // Cuenta cuántos clientes hay en cada estado
+      const total     = clientes.length;
+      const activos   = clientes.filter(c => c.estado === 'activo').length;
+      const pendientes= clientes.filter(c => c.estado === 'pendiente').length;
+      const inactivos = clientes.filter(c => c.estado === 'inactivo').length;
+
+      // Actualiza los números en las tarjetas de estadísticas
+      document.getElementById('stat-total').textContent     = total;
+      document.getElementById('stat-activos').textContent   = activos;
+      document.getElementById('stat-pendientes').textContent= pendientes;
+      document.getElementById('stat-inactivos').textContent = inactivos;
+
+      // Actualiza el badge del menú lateral
+      document.getElementById('badge-clientes').textContent = total;
+
+      // Muestra los últimos 5 clientes en el dashboard
+      const ultimos5 = clientes.slice(-5).reverse(); // Los últimos 5, en orden inverso
+      document.getElementById('tabla-dashboard').innerHTML = ultimos5.map(c => `
+        <tr>
+          <td>
+            <div class="celda-cliente">
+              <div class="avatar-tabla" style="background:${colorAvatar(c.nombre)}">
+                ${iniciales(c.nombre, c.apellido)}
+              </div>
+              <span style="font-weight:600">${c.nombre} ${c.apellido}</span>
+            </div>
+          </td>
+          <td style="color:var(--color-texto-suave)">${c.email}</td>
+          <td>${chipEstado(c.estado)}</td>
+        </tr>
+      `).join('');
+    }
+
+
+    // ===========================================================
+    // FUNCIONES AUXILIARES (helpers)
+    // ===========================================================
+
+    // Genera las iniciales de un nombre (ej: "Ana García" → "AG")
+    function iniciales(nombre, apellido) {
+      return (nombre[0] + apellido[0]).toUpperCase();
+    }
+
+    // Asigna un color de fondo al avatar según la primera letra del nombre
+    function colorAvatar(nombre) {
+      const colores = ['#4f8ef7','#38d9a9','#fc5c7d','#f6c90e','#9b8ef7','#f77f4f'];
+      // charCodeAt(0) devuelve el código ASCII de la letra
+      return colores[nombre.charCodeAt(0) % colores.length];
+    }
+
+    // Genera el HTML del chip de estado
+    function chipEstado(estado) {
+      const mapa = {
+        activo:    '<span class="chip chip-activo">Activo</span>',
+        pendiente: '<span class="chip chip-pendiente">Pendiente</span>',
+        inactivo:  '<span class="chip chip-inactivo">Inactivo</span>'
+      };
+      return mapa[estado] || estado;
+    }
+
+
+    // ===========================================================
+    // CRUD — CREAR
+    // ===========================================================
+    function abrirModalCrear() {
+      idEditando = null; // Sin ID = modo creación
+
+      // Limpia todos los campos del formulario
+      document.getElementById('campo-nombre').value   = '';
+      document.getElementById('campo-apellido').value = '';
+      document.getElementById('campo-email').value    = '';
+      document.getElementById('campo-telefono').value = '';
+      document.getElementById('campo-empresa').value  = '';
+      document.getElementById('campo-estado').value   = 'activo';
+      document.getElementById('campo-notas').value    = '';
+
+      document.getElementById('modal-titulo').textContent = '+ Nuevo Cliente';
+      document.getElementById('overlay-modal').classList.add('visible');
+    }
+
+
+    // ===========================================================
+    // CRUD — GUARDAR (crea o actualiza según idEditando)
+    // ===========================================================
+    function guardarCliente() {
+      // Lee los valores de los campos del formulario
+      const nombre   = document.getElementById('campo-nombre').value.trim();
+      const apellido = document.getElementById('campo-apellido').value.trim();
+      const email    = document.getElementById('campo-email').value.trim();
+      const telefono = document.getElementById('campo-telefono').value.trim();
+      const empresa  = document.getElementById('campo-empresa').value.trim();
+      const estado   = document.getElementById('campo-estado').value;
+      const notas    = document.getElementById('campo-notas').value.trim();
+
+      // Validación básica: campos obligatorios
+      if (!nombre || !apellido || !email) {
+        mostrarToast('⚠️ Nombre, apellido y email son obligatorios', '#f6c90e', '#000');
+        return; // Detiene la ejecución
+      }
+
+      if (idEditando === null) {
+        // CREAR: agrega un nuevo objeto al array
+        clientes.push({ id: siguienteId++, nombre, apellido, email, telefono, empresa, estado, notas });
+        mostrarToast('✓ Cliente creado correctamente');
+      } else {
+        // ACTUALIZAR: busca el índice del cliente y reemplaza sus datos
+        const indice = clientes.findIndex(c => c.id === idEditando);
+        if (indice !== -1) {
+          clientes[indice] = { id: idEditando, nombre, apellido, email, telefono, empresa, estado, notas };
+        }
+        mostrarToast('✓ Cliente actualizado');
+      }
+
+      cerrarModal();
+      renderizarTabla();
+      renderizarDashboard();
+    }
+
+
+    // ===========================================================
+    // CRUD — EDITAR (abre el modal con los datos del cliente)
+    // ===========================================================
+    function editarCliente(id) {
+      // FIND: busca el primer objeto cuya propiedad 'id' coincida
+      const cliente = clientes.find(c => c.id === id);
+      if (!cliente) return;
+
+      idEditando = id; // Guarda el ID que se está editando
+
+      // Rellena el formulario con los datos actuales
+      document.getElementById('campo-nombre').value   = cliente.nombre;
+      document.getElementById('campo-apellido').value = cliente.apellido;
+      document.getElementById('campo-email').value    = cliente.email;
+      document.getElementById('campo-telefono').value = cliente.telefono;
+      document.getElementById('campo-empresa').value  = cliente.empresa;
+      document.getElementById('campo-estado').value   = cliente.estado;
+      document.getElementById('campo-notas').value    = cliente.notas;
+
+      document.getElementById('modal-titulo').textContent = '✏️ Editar Cliente';
+      document.getElementById('overlay-modal').classList.add('visible');
+    }
+
+
+    // ===========================================================
+    // CRUD — ELIMINAR (con confirmación del navegador)
+    // ===========================================================
+    function eliminarCliente(id) {
+      // confirm() muestra un diálogo nativo del navegador
+      const confirmar = confirm('¿Estás seguro de eliminar este cliente?');
+      if (!confirmar) return;
+
+      // FILTER: crea un nuevo array SIN el cliente con ese ID
+      clientes = clientes.filter(c => c.id !== id);
+
+      renderizarTabla();
+      renderizarDashboard();
+      mostrarToast('🗑️ Cliente eliminado', '#fc5c7d', 'white');
+    }
+
+
+    // ===========================================================
+    // FUNCIONES DEL MODAL
+    // ===========================================================
+    function cerrarModal() {
+      document.getElementById('overlay-modal').classList.remove('visible');
+    }
+
+    // Cierra el modal si el usuario hace click en el fondo oscuro
+    function cerrarModalSiClickFuera(event) {
+      // event.target es el elemento que recibió el click
+      if (event.target === document.getElementById('overlay-modal')) {
+        cerrarModal();
+      }
+    }
+
+
+    // ===========================================================
+    // FUNCIÓN: Filtrar tabla en tiempo real
+    // Se llama con oninput y onchange en los controles de filtro
+    // ===========================================================
+    function filtrarTabla() {
+      renderizarTabla();
+    }
+
+
+    // ===========================================================
+    // FUNCIÓN: Navegación entre secciones
+    // Muestra u oculta vistas cambiando display style
+    // ===========================================================
+    function mostrarSeccion(seccion) {
+      // Define qué vistas existen
+      const vistas = ['dashboard', 'clientes', 'reportes', 'config'];
+
+      // Oculta todas las vistas
+      vistas.forEach(v => {
+        document.getElementById(`vista-${v}`).style.display = 'none';
+      });
+
+      // Muestra solo la vista seleccionada
+      document.getElementById(`vista-${seccion}`).style.display = 'block';
+
+      // Actualiza los estilos del menú lateral (quita y agrega clase 'activo')
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('activo');
+      });
+
+      // querySelectorAll devuelve una lista de todos los .nav-item
+      // El índice corresponde al orden en el HTML
+      const indices = { dashboard: 0, clientes: 1, reportes: 2, config: 3 };
+      document.querySelectorAll('.nav-item')[indices[seccion]]?.classList.add('activo');
+
+      // Actualiza el título del header
+      const titulos = {
+        dashboard: ['Dashboard', '/ inicio'],
+        clientes:  ['Clientes',  '/ clientes'],
+        reportes:  ['Reportes',  '/ reportes'],
+        config:    ['Configuración', '/ configuracion']
+      };
+
+      document.getElementById('header-titulo').textContent = titulos[seccion][0];
+      document.getElementById('header-ruta').textContent   = titulos[seccion][1];
+
+      // En móvil: cierra el sidebar después de navegar
+      document.getElementById('sidebar').classList.remove('abierto');
+    }
+
+
+    // ===========================================================
+    // FUNCIÓN: Mostrar notificación (Toast)
+    // ===========================================================
+    function mostrarToast(mensaje, fondo = 'var(--color-acento2)', color = '#0f1117') {
+      const toast = document.getElementById('toast');
+      toast.textContent = mensaje;
+      toast.style.background = fondo;
+      toast.style.color = color;
+      toast.classList.add('visible');
+
+      // setTimeout: ejecuta la función después de N milisegundos
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2500);
+    }
+
+
+    // ===========================================================
+    // FUNCIÓN: Toggle del sidebar en móvil
+    // ===========================================================
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('abierto');
+    }
+
+
+    // ===========================================================
+    // TECLADO: Cerrar modal con la tecla Escape
+    // ===========================================================
+    document.addEventListener('keydown', function(event) {
+      // event.key contiene la tecla presionada
+      if (event.key === 'Escape') {
+        cerrarModal();
+      }
+    });
+
+
+    // ===========================================================
+    // INICIALIZACIÓN: Se ejecuta cuando carga la página
+    // ===========================================================
+    renderizarTabla();
+    renderizarDashboard();
+
+  </script>
 </body>
 </html>
