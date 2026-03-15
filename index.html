@@ -986,33 +986,6 @@ function irVista(nombre) {
   if (nombre === 'modulos')   renderModulos();
 }
 
-function irModulo(idx) {
-  moduloActual  = idx;
-  vistaAnterior = VISTAS.find(v => document.getElementById(v).style.display !== 'none')?.replace('vista-','') || 'modulos';
-
-  const m = MODULOS[idx];
-  mostrarVista('vista-modulo');
-  document.getElementById('header-titulo').textContent = m.nombre;
-  document.getElementById('mh-icon').innerHTML    = m.icono;
-  document.getElementById('mh-icon').style.background = m.ib;
-  document.getElementById('mh-nombre').textContent = m.nombre;
-  document.getElementById('mh-desc').textContent   = m.desc;
-  document.getElementById('crud-titulo').textContent = 'Registros — '+m.nombre;
-  document.getElementById('crud-sub').textContent   = m.desc;
-
-  // Actualiza texto del botón volver
-  document.getElementById('back-btn').querySelector('span') && (document.getElementById('back-btn').lastChild.textContent = ' Volver a '+(vistaAnterior==='dashboard'?'Dashboard':'Módulos'));
-
-  const inp = document.getElementById('input-busqueda');
-  if(inp) inp.value = '';
-
-  // Marca nav activo
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('activo', n.getAttribute('onclick') === `irModulo(${idx})`);
-  });
-
-  renderTabla();
-}
 
 function volverDesdeModulo() {
   irVista(vistaAnterior);
@@ -1161,32 +1134,6 @@ function renderDashboard() {
 /* ─────────────────────────────────────────
    TABLA DEL MÓDULO
 ───────────────────────────────────────── */
-function renderTabla() {
-  if (moduloActual === null) return;
-  const m   = MODULOS[moduloActual];
-  const bus = (document.getElementById('input-busqueda')?.value || '').toLowerCase();
-  const filt = datos[moduloActual].filter(r => Object.values(r).join(' ').toLowerCase().includes(bus));
-
-  document.getElementById('tabla-head').innerHTML = `<tr>${m.cols.map(c=>`<th>${c}</th>`).join('')}<th>Acciones</th></tr>`;
-  const tb = document.getElementById('tabla-body');
-
-  if (!filt.length) {
-    tb.innerHTML = `<tr><td colspan="${m.cols.length+1}" style="text-align:center;padding:50px;color:var(--txt2)">Sin registros — clic en "Nuevo Registro" para comenzar</td></tr>`;
-  } else {
-    const icoEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-    const icoDel  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>`;
-    tb.innerHTML  = filt.map(r=>`
-      <tr>
-        ${m.fila(r).map(v=>`<td>${v}</td>`).join('')}
-        <td><div class="ac-cel">
-          <button class="bico ed" onclick="editarReg(${r._id})" title="Editar">${icoEdit}</button>
-          <button class="bico el" onclick="eliminarReg(${r._id})" title="Eliminar">${icoDel}</button>
-        </div></td>
-      </tr>
-    `).join('');
-  }
-  document.getElementById('contador').textContent = `${filt.length} registros`;
-}
 
 /* ─────────────────────────────────────────
    MODAL
@@ -1222,431 +1169,84 @@ function campoHTML(c,reg) {
 function cerrarModal() { document.getElementById('overlay-modal').classList.remove('visible'); }
 function cerrarModalFuera(e) { if(e.target===document.getElementById('overlay-modal')) cerrarModal(); }
 
-function guardarRegistro() {
-  const m = MODULOS[moduloActual];
-  const reg = { _id: idEditando ?? sigId[moduloActual] };
-  m.campos.forEach(c => { const el=document.getElementById('f_'+c.id); reg[c.id]=el?el.value.trim():''; });
-  if (!reg[m.campos[0].id]) { mostrarToast('Completa el campo principal','#fbbf24','#000'); return; }
-  if (idEditando===null) { datos[moduloActual].push(reg); sigId[moduloActual]++; mostrarToast('Registro creado','var(--ac)','#03060e'); }
-  else { const i=datos[moduloActual].findIndex(r=>r._id===idEditando); if(i!==-1) datos[moduloActual][i]=reg; mostrarToast('Registro actualizado','var(--ac)','#03060e'); }
-  cerrarModal(); renderTabla();
-}
-
-function editarReg(id) { const r=datos[moduloActual].find(r=>r._id===id); if(r) abrirModal(r); }
-function eliminarReg(id) {
-  if(!confirm('¿Confirmas la eliminación?')) return;
-  datos[moduloActual]=datos[moduloActual].filter(r=>r._id!==id);
-  renderTabla(); mostrarToast('Registro eliminado','#ff4d6d','#fff');
-}
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURACIÓN DEL BACKEND
+═══════════════════════════════════════════════════════════ */
+const API = 'http://192.168.1.77:3000/api'; // URL base del backend
 
 /* ─────────────────────────────────────────
-   TOAST
+   HELPER: llama al backend con fetch()
+   Agrega automáticamente el token JWT en
+   cada petición para autenticar al usuario.
 ───────────────────────────────────────── */
-function mostrarToast(msg,fondo='var(--ac)',color='#03060e') {
-  const t=document.getElementById('toast');
-  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg><span>${msg}</span>`;
-  t.style.background=fondo; t.style.color=color;
-  t.classList.add('visible');
-  setTimeout(()=>t.classList.remove('visible'),2500);
-}
+async function apiFetch(url, metodo = 'GET', body = null) {
+  try {
+    // Lee el token guardado por el login
+    const token = sessionStorage.getItem('pulsarx_token');
 
-/* ─────────────────────────────────────────
-   MODO CLARO / OSCURO
-───────────────────────────────────────── */
-function toggleModo() {
-  document.body.classList.toggle('modo-claro');
-  const btn=document.getElementById('btn-modo'), ico=document.getElementById('icono-modo');
-  btn.classList.add('girando'); setTimeout(()=>btn.classList.remove('girando'),420);
-  if(document.body.classList.contains('modo-claro')) {
-    ico.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-  } else {
-    ico.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
-  }
-  // Redibuja gráficos con nuevo tema
-  if(document.getElementById('vista-dashboard').style.display !== 'none') renderDashboard();
-}
+    const opciones = {
+      method:  metodo,
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': token ? `Bearer ${token}` : '', // envía el token en cada petición
+      },
+    };
+    if (body) opciones.body = JSON.stringify(body);
 
-/* ─────────────────────────────────────────
-   SIDEBAR MÓVIL
-───────────────────────────────────────── */
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('abierto'); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarModal(); });
+    const respuesta = await fetch(url, opciones);
 
-/* ─────────────────────────────────────────
-   DESCARGAR REPORTE .XLSX DEL MÓDULO ACTIVO
-   Usa SheetJS (XLSX) cargado desde CDN.
-   Genera una tabla formateada con encabezados
-   de color y todos los registros del módulo.
-───────────────────────────────────────── */
-function descargarXLSX() {
-  if (moduloActual === null) return;
-  const m    = MODULOS[moduloActual];
-  const filas = datos[moduloActual];
-
-  // Si no hay registros genera igual el archivo con solo encabezados
-  const encabezados = m.cols; // columnas definidas en el módulo
-
-  // Construye el array de datos: primera fila = encabezados
-  const wsData = [encabezados];
-
-  // Agrega cada registro como fila (extrae valores planos sin HTML de chips)
-  filas.forEach(r => {
-    // m.fila(r) devuelve celdas que pueden tener HTML de chips → las limpiamos
-    const celdas = m.campos.map(c => r[c.id] || '');
-    wsData.push(celdas);
-  });
-
-  // Crea la hoja de cálculo desde el array
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // ── Estilos de ancho de columna automático ──
-  const maxLen = encabezados.map((h, i) => {
-    const maxData = filas.reduce((mx, r) => {
-      const val = String(m.campos[i] ? (r[m.campos[i].id] || '') : '');
-      return Math.max(mx, val.length);
-    }, h.length);
-    return { wch: Math.min(Math.max(maxData + 2, 12), 40) };
-  });
-  ws['!cols'] = maxLen;
-
-  // ── Fila de título del reporte encima de los encabezados ──
-  XLSX.utils.sheet_add_aoa(ws, [[`REPORTE — ${m.nombre.toUpperCase()}`]], { origin: 'A1' });
-  XLSX.utils.sheet_add_aoa(ws, [[`Generado: ${new Date().toLocaleString('es-PE')} | PulsarX Security CRM`]], { origin: 'A2' });
-  XLSX.utils.sheet_add_aoa(ws, [['']], { origin: 'A3' }); // fila vacía separadora
-  XLSX.utils.sheet_add_aoa(ws, [encabezados], { origin: 'A4' }); // encabezados en fila 4
-
-  // Agrega los datos desde la fila 5
-  filas.forEach((r, i) => {
-    const celdas = m.campos.map(c => r[c.id] || '');
-    XLSX.utils.sheet_add_aoa(ws, [celdas], { origin: `A${5 + i}` });
-  });
-
-  // Crea el libro de trabajo con una hoja
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, m.nombre.substring(0, 31)); // max 31 chars en nombre de hoja
-
-  // Agrega hoja de resumen con metadatos
-  const wsResumen = XLSX.utils.aoa_to_sheet([
-    ['RESUMEN DEL REPORTE'],
-    [''],
-    ['Módulo',        m.nombre],
-    ['Descripción',  m.desc],
-    ['Total registros', filas.length],
-    ['Generado por', 'Carlos Ludeña'],
-    ['Sistema',      'PulsarX Security CRM'],
-    ['Fecha',        new Date().toLocaleDateString('es-PE')],
-    ['Hora',         new Date().toLocaleTimeString('es-PE')],
-  ]);
-  wsResumen['!cols'] = [{ wch: 20 }, { wch: 50 }];
-  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-
-  // Descarga el archivo
-  const nombreArchivo = `PulsarX_${m.nombre.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb, nombreArchivo);
-
-  mostrarToast(`Reporte descargado: ${nombreArchivo}`, 'var(--grn)', '#03060e');
-}
-
-
-/* ─────────────────────────────────────────
-   DESCARGAR REPORTE EJECUTIVO — WORD (.doc)
-   Captura los canvas de Chart.js como imágenes
-   base64 con canvas.toDataURL() e las incrusta
-   directamente en el HTML del documento Word.
-   Sin librerías externas — 100% nativo.
-───────────────────────────────────────── */
-function descargarReporteWord() {
-  const fecha    = new Date().toLocaleDateString('es-PE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  const horaGen  = new Date().toLocaleTimeString('es-PE');
-  const totalReg = totalRegistros();
-
-  // ── Captura cada canvas de Chart.js como imagen base64 ──
-  // canvas.toDataURL('image/png') devuelve un string "data:image/png;base64,..."
-  // que se puede usar directamente como src de un <img> en HTML.
-  // Si el canvas no existe aún (dashboard nunca renderizado) usa una imagen vacía.
-  function capturarGrafico(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return '';                        // si no existe, devuelve vacío
-    try {
-      return canvas.toDataURL('image/png');        // captura el gráfico como PNG en base64
-    } catch(e) {
-      return '';                                   // en caso de error de CORS, devuelve vacío
+    // Si el token expiró, el backend devuelve 401 → redirige al login
+    if (respuesta.status === 401 && token !== 'sin-backend') {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+      return { ok: false, datos: {} };
     }
+
+    const datos = await respuesta.json();
+    return { ok: respuesta.ok, datos };
+
+  } catch (err) {
+    console.error('Error de red:', err.message);
+    mostrarToast('Sin conexión al servidor', '#ff4d6d', '#fff');
+    return { ok: false, datos: { error: 'Sin conexión al servidor' } };
   }
-
-  // Captura los 5 gráficos del dashboard
-  const imgBarras  = capturarGrafico('chart-barras');   // actividad por módulo
-  const imgPastel1 = capturarGrafico('chart-pastel1');  // distribución de accesos
-  const imgPastel2 = capturarGrafico('chart-pastel2');  // incidentes por severidad
-  const imgPastel3 = capturarGrafico('chart-pastel3');  // extintores por estado
-  const imgPolar   = capturarGrafico('chart-polar');    // rondas por turno
-
-  // Helper: genera el HTML de una imagen si existe, o un aviso si no
-  function imgTag(src, alt, ancho='100%') {
-    if (!src) return `<p style="color:#94a3b8;font-size:12px;font-style:italic;text-align:center;padding:20px;border:1px dashed #e2e8f0">
-      Gráfico no disponible — abra el Dashboard primero y vuelva a descargar.
-    </p>`;
-    return `<img src="${src}" alt="${alt}" style="width:${ancho};max-width:100%;border-radius:8px;border:1px solid #e2e8f0;display:block;margin:8px auto"/>`;
-  }
-
-  // ── KPIs para la tabla ──
-  const kpis = [
-    ['Módulos Activos',       '22'],
-    ['Total Registros',       String(totalReg)],
-    ['Incidentes Abiertos',   String((datos[9]||[]).filter(r=>r.estado==='Abierto').length)],
-    ['Accesos del Sistema',   String((datos[0]||[]).length + (datos[1]||[]).length)],
-    ['Rondas Registradas',    String((datos[8]||[]).length)],
-    ['Extintores Operativos', String((datos[12]||[]).filter(r=>r.estado==='Operativo').length)],
-  ];
-
-  // ── Filas de la tabla de módulos ──
-  const filasModulos = MODULOS.map((m,i) => `
-    <tr>
-      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px">${i+1}</td>
-      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px;font-weight:600">${m.nombre}</td>
-      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:12px;color:#64748b">${m.desc}</td>
-      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px;text-align:center;font-weight:700;color:#0e7490">${datos[i].length}</td>
-    </tr>`).join('');
-
-  // ── Filas de KPIs ──
-  const filasKPIs = kpis.map(([k,v]) => `
-    <tr>
-      <td style="padding:7px 14px;border:1px solid #d1d5db;font-size:13px;font-weight:600">${k}</td>
-      <td style="padding:7px 14px;border:1px solid #d1d5db;font-size:15px;font-weight:700;color:#0e7490;text-align:center">${v}</td>
-    </tr>`).join('');
-
-  // ── Hallazgos ──
-  const modulosConDatos = MODULOS
-    .map((m,i) => ({ nombre:m.nombre, desc:m.desc, total:datos[i].length }))
-    .filter(m => m.total > 0)
-    .sort((a,b) => b.total - a.total);
-
-  const hallazgosHTML = modulosConDatos.length > 0
-    ? modulosConDatos.map(m => `
-        <p style="margin:6px 0;font-size:13px">
-          <span style="color:#0e7490;font-weight:700">&#9679; ${m.nombre}:</span>
-          &nbsp;${m.total} registro${m.total!==1?'s':''} — ${m.desc}
-        </p>`).join('')
-    : `<p style="color:#94a3b8;font-size:13px;font-style:italic">
-        No se han registrado datos en ningún módulo aún.
-       </p>`;
-
-  // ── HTML completo del documento con gráficos embebidos ──
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office"
-          xmlns:w="urn:schemas-microsoft-com:office:word"
-          xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="UTF-8"/>
-      <!--[if gte mso 9]>
-      <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom></w:WordDocument></xml>
-      <![endif]-->
-      <style>
-        @page  { size:A4; margin:2cm 2.5cm; }
-        body   { font-family:Calibri,Arial,sans-serif; font-size:13px; color:#1e293b; }
-        table  { border-collapse:collapse; width:100%; margin:12px 0; }
-        th     { background:#0e1a2e; color:#fff; padding:8px 12px; font-size:13px; text-align:left; }
-        td     { font-size:13px; }
-        .sec   { font-size:18px; font-weight:700; color:#0e7490;
-                 border-bottom:2px solid #00e5ff; padding-bottom:5px;
-                 margin-top:32px; margin-bottom:12px; }
-        .sub   { font-size:13px; color:#64748b; margin-bottom:10px; }
-        .grafico-titulo { font-size:13px; font-weight:700; color:#1e293b; margin:18px 0 4px; }
-        .grafico-sub    { font-size:11px; color:#94a3b8; margin-bottom:8px; }
-        .grafico-wrap   { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;
-                          padding:14px; margin-bottom:20px; }
-        .grid-2         { display:table; width:100%; }
-        .col-2          { display:table-cell; width:49%; vertical-align:top; padding:0 6px; }
-        .portada-titulo { font-size:32px; font-weight:900; color:#0e7490;
-                          letter-spacing:2px; text-align:center; margin-top:60px; }
-        .portada-sub    { font-size:18px; color:#8b5cf6; text-align:center;
-                          margin-top:8px; letter-spacing:1px; }
-        .portada-linea  { border:none; border-top:3px solid #00e5ff; margin:30px 0; }
-        .portada-meta   { text-align:center; font-size:14px; color:#334155; line-height:2.2; }
-        .conf           { text-align:center; font-size:13px; font-weight:700; color:#ff4d6d;
-                          border:2px solid #ff4d6d; padding:6px 20px;
-                          display:inline-block; margin-top:20px; letter-spacing:2px; }
-        .pie            { text-align:center; font-size:11px; color:#94a3b8;
-                          border-top:1px solid #e2e8f0; padding-top:10px; margin-top:40px; }
-        .page-break     { page-break-after:always; }
-      </style>
-    </head>
-    <body>
-
-      <!-- ═══════════ PORTADA ═══════════ -->
-      <div class="portada-titulo">PULSARX SECURITY CRM</div>
-      <div class="portada-sub">REPORTE EJECUTIVO DEL SISTEMA</div>
-      <hr class="portada-linea"/>
-      <div class="portada-meta">
-        <b>Preparado por:</b> Carlos Ludeña<br/>
-        <b>Cargo:</b> Administrador del Sistema<br/>
-        <b>Fecha:</b> ${fecha}<br/>
-        <b>Hora de generación:</b> ${horaGen}
-      </div>
-      <div style="text-align:center;margin-top:24px">
-        <span class="conf">&#128274; CONFIDENCIAL — USO INTERNO</span>
-      </div>
-
-      <div class="page-break"></div>
-
-      <!-- ═══════════ SECCIÓN 1: RESUMEN EJECUTIVO ═══════════ -->
-      <div class="sec">1. Resumen Ejecutivo</div>
-      <p style="font-size:13px;line-height:1.8;color:#334155">
-        El presente informe corresponde al estado operativo del sistema <strong>PulsarX Security CRM</strong>,
-        generado automáticamente el <strong>${fecha}</strong>. El sistema cuenta con
-        <strong>22 módulos activos</strong> que cubren todas las áreas críticas de seguridad institucional.
-        Al momento de la generación, el sistema registra un total de
-        <strong style="color:#0e7490">${totalReg} registros</strong>.
-      </p>
-
-      <!-- ═══════════ SECCIÓN 2: INDICADORES KPI ═══════════ -->
-      <div class="sec">2. Indicadores Clave de Desempeño (KPIs)</div>
-      <p class="sub">Estado actual del sistema al momento de la generación del reporte:</p>
-      <table>
-        <thead><tr>
-          <th style="width:70%">Indicador</th>
-          <th style="width:30%;text-align:center">Valor</th>
-        </tr></thead>
-        <tbody>${filasKPIs}</tbody>
-      </table>
-
-      <!-- ═══════════ SECCIÓN 3: GRÁFICOS ═══════════ -->
-      <div class="sec">3. Análisis Gráfico del Sistema</div>
-      <p class="sub">Visualizaciones generadas automáticamente desde el Dashboard del sistema.</p>
-
-      <!-- Gráfico 1: Actividad por módulo (barras) — ancho completo -->
-      <div class="grafico-wrap">
-        <div class="grafico-titulo">&#9642; Actividad por Módulo — Registros Totales</div>
-        <div class="grafico-sub">Comparación del volumen de registros en los 22 módulos del sistema</div>
-        ${imgTag(imgBarras, 'Actividad por módulo', '100%')}
-      </div>
-
-      <!-- Gráficos 2 y 3: Distribución accesos + Incidentes (lado a lado) -->
-      <div class="grid-2">
-        <div class="col-2">
-          <div class="grafico-wrap">
-            <div class="grafico-titulo">&#9642; Distribución de Accesos</div>
-            <div class="grafico-sub">Tipos de ingreso registrados</div>
-            ${imgTag(imgPastel1, 'Distribución de accesos', '95%')}
-          </div>
-        </div>
-        <div class="col-2">
-          <div class="grafico-wrap">
-            <div class="grafico-titulo">&#9642; Estado de Incidentes</div>
-            <div class="grafico-sub">Distribución por severidad</div>
-            ${imgTag(imgPastel2, 'Estado de incidentes', '95%')}
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráficos 4 y 5: Extintores + Rondas (lado a lado) -->
-      <div class="grid-2">
-        <div class="col-2">
-          <div class="grafico-wrap">
-            <div class="grafico-titulo">&#9642; Estado de Extintores</div>
-            <div class="grafico-sub">Control de vigencia operativa</div>
-            ${imgTag(imgPastel3, 'Estado de extintores', '95%')}
-          </div>
-        </div>
-        <div class="col-2">
-          <div class="grafico-wrap">
-            <div class="grafico-titulo">&#9642; Rondas por Turno</div>
-            <div class="grafico-sub">Distribución semanal de vigilancia</div>
-            ${imgTag(imgPolar, 'Rondas por turno', '95%')}
-          </div>
-        </div>
-      </div>
-
-      <div class="page-break"></div>
-
-      <!-- ═══════════ SECCIÓN 4: ACTIVIDAD POR MÓDULO ═══════════ -->
-      <div class="sec">4. Actividad Detallada por Módulo</div>
-      <p class="sub">Los 22 módulos del sistema con su respectivo conteo de registros:</p>
-      <table>
-        <thead><tr>
-          <th style="width:5%">#</th>
-          <th style="width:28%">Módulo</th>
-          <th style="width:54%">Descripción</th>
-          <th style="width:13%;text-align:center">Registros</th>
-        </tr></thead>
-        <tbody>${filasModulos}</tbody>
-      </table>
-
-      <!-- ═══════════ SECCIÓN 5: HALLAZGOS ═══════════ -->
-      <div class="sec">5. Hallazgos — Módulos con Actividad</div>
-      <p class="sub">Módulos que presentan registros activos, ordenados de mayor a menor actividad:</p>
-      ${hallazgosHTML}
-
-      <!-- ═══════════ SECCIÓN 6: RECOMENDACIONES ═══════════ -->
-      <div class="sec">6. Recomendaciones</div>
-      <p style="font-size:13px;line-height:2.2;color:#334155">
-        &#9679; Mantener el registro diario en todos los módulos de acceso para garantizar la trazabilidad completa.<br/>
-        &#9679; Revisar periódicamente el módulo de Incidentes para dar seguimiento oportuno a los casos abiertos.<br/>
-        &#9679; Actualizar el estado de extintores antes de su fecha de vencimiento.<br/>
-        &#9679; Realizar simulacros y registrarlos en Gestión de Sismos al menos una vez por trimestre.<br/>
-        &#9679; Conectar el sistema a una base de datos MySQL para persistencia permanente de los datos.<br/>
-        &#9679; Capacitar al personal de seguridad en el uso correcto de cada módulo del sistema.
-      </p>
-
-      <!-- ═══════════ PIE DEL DOCUMENTO ═══════════ -->
-      <div class="pie">
-        PulsarX Security CRM &nbsp;|&nbsp; Reporte generado automáticamente
-        &nbsp;|&nbsp; Confidencial &nbsp;|&nbsp; ${fecha}
-      </div>
-
-    </body>
-    </html>`;
-
-  // ── Empaqueta el HTML como blob con MIME type de Word y descarga ──
-  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `PulsarX_Reporte_Ejecutivo_${new Date().toISOString().slice(0,10)}.doc`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  mostrarToast('Reporte Ejecutivo con gráficos descargado ✓', '#4f46e5', '#fff');
 }
 
-
 /* ─────────────────────────────────────────
-   SESIÓN — Lee los datos del usuario logueado
-   guardados por el login en sessionStorage.
+   SESIÓN — Verifica token y carga datos
    Si no hay sesión activa, redirige al login.
 ───────────────────────────────────────── */
 (function verificarSesion() {
   const sesionRaw = sessionStorage.getItem('pulsarx_sesion');
+  const token     = sessionStorage.getItem('pulsarx_token');
 
-  // Si no hay sesión, redirige al login
+  // Sin sesión → redirige al login
   if (!sesionRaw) {
-    // Permite acceso directo al CRM en desarrollo (sin login)
-    // En producción descomenta la siguiente línea:
-    // window.location.href = 'login.html';
+    window.location.href = 'login.html';
     return;
+  }
+
+  // Si hay sesión pero no token (modo sin backend) → genera un token falso
+  // para que el sistema funcione con datos en memoria
+  if (!token) {
+    sessionStorage.setItem('pulsarx_token', 'sin-backend');
   }
 
   const s = JSON.parse(sesionRaw);
 
-  // Actualiza el nombre del usuario en el sidebar
+  // Actualiza el nombre en el sidebar
   const elNombre = document.querySelector('.usuario-nombre');
   const elRol    = document.querySelector('.usuario-rol');
   if (elNombre) elNombre.textContent = `${s.nombre} ${s.apellido}`;
-  if (elRol)    elRol.textContent    = s.cargo || 'Usuario';
+  if (elRol)    elRol.textContent    = s.empresa || s.cargo;
 
-  // Actualiza las iniciales del avatar (sidebar + header)
+  // Actualiza iniciales del avatar
   const iniciales = (s.nombre[0] + (s.apellido?.[0] || '')).toUpperCase();
   document.querySelectorAll('.avatar').forEach(av => av.textContent = iniciales);
 
-  // Actualiza el nombre de bienvenida en la página de módulos
+  // Actualiza el nombre de bienvenida
   const elBienvenida = document.getElementById('nombre-usuario');
   if (elBienvenida) elBienvenida.textContent = `${s.nombre} ${s.apellido}`;
-
-  // Muestra el nombre de la empresa en el pie del sidebar
-  const elEmpresa = document.querySelector('.usuario-rol');
-  if (elEmpresa) elEmpresa.textContent = s.empresa || s.cargo;
 })();
 
 /* ─────────────────────────────────────────
@@ -1654,13 +1254,252 @@ function descargarReporteWord() {
 ───────────────────────────────────────── */
 function cerrarSesion() {
   if (!confirm('¿Deseas cerrar sesión?')) return;
-  sessionStorage.removeItem('pulsarx_sesion'); // Elimina la sesión
-  window.location.href = 'login.html'; // Redirige al login
+  sessionStorage.removeItem('pulsarx_sesion');
+  sessionStorage.removeItem('pulsarx_token');
+  window.location.href = 'login.html';
 }
 
 /* ─────────────────────────────────────────
-   INICIALIZACIÓN
+   MAPA: nombre de módulo → endpoint API
+   Cada módulo del CRM tiene su endpoint
+   correspondiente en el backend.
 ───────────────────────────────────────── */
+const MODULO_API = {
+  0:  'acceso-alumnos',
+  1:  'acceso-colaboradores',
+  2:  'acceso-visitas',
+  3:  'acceso-proveedores',
+  4:  'acceso-eventos',
+  5:  'estacionamientos',
+  6:  'movimiento-activos',
+  7:  'gestion-accesos',
+  8:  'control-rondas',
+  9:  'incidentes',
+  10: 'bitacora',
+  11: 'control-vigilancia',
+  12: 'extintores',
+  13: 'llaves',
+  14: 'inventarios',
+  15: 'mantenimiento',
+  16: 'recojo-alumnos',
+  17: 'objetos-perdidos',
+  18: 'altas-bajas',
+  19: 'riesgos',
+  20: 'sismos',
+  21: 'transporte',
+};
+
+/* ─────────────────────────────────────────
+   CARGAR DATOS DEL MÓDULO DESDE MYSQL
+   Reemplaza el array en memoria por datos
+   reales traídos del backend con fetch().
+───────────────────────────────────────── */
+async function cargarDatosModulo(idx) {
+  const endpoint = MODULO_API[idx];
+  if (!endpoint) return;
+
+  // GET /api/modulos/{endpoint}
+  const { ok, datos } = await apiFetch(`${API}/modulos/${endpoint}`);
+
+  if (ok && Array.isArray(datos)) {
+    // Convierte los datos de MySQL al formato que espera el frontend
+    // MySQL devuelve id numérico, el frontend usa _id
+    datos_modulo[idx] = datos.map(r => ({ ...r, _id: r.id }));
+  } else {
+    datos_modulo[idx] = [];
+    console.warn(`No se pudo cargar ${endpoint}:`, datos.error);
+  }
+}
+
+/* Objeto que almacena los registros de cada módulo
+   (antes era el array `datos` con datos en memoria) */
+const datos_modulo = {};
+MODULOS.forEach((_, i) => { datos_modulo[i] = []; });
+
+/* ─────────────────────────────────────────
+   CRUD — GUARDAR (crear o actualizar en MySQL)
+───────────────────────────────────────── */
+async function guardarRegistro() {
+  const m        = MODULOS[moduloActual];
+  const endpoint = MODULO_API[moduloActual];
+
+  // Construye el objeto con los valores del formulario
+  const reg = {};
+  m.campos.forEach(c => {
+    const el = document.getElementById('f_' + c.id);
+    reg[c.id] = el ? el.value.trim() : '';
+  });
+
+  // Validación: primer campo obligatorio
+  if (!reg[m.campos[0].id]) {
+    mostrarToast('Completa el campo principal', '#fbbf24', '#000');
+    return;
+  }
+
+  let resultado;
+  if (idEditando === null) {
+    // CREAR — POST /api/modulos/{endpoint}
+    resultado = await apiFetch(`${API}/modulos/${endpoint}`, 'POST', reg);
+  } else {
+    // ACTUALIZAR — PUT /api/modulos/{endpoint}/{id}
+    resultado = await apiFetch(`${API}/modulos/${endpoint}/${idEditando}`, 'PUT', reg);
+  }
+
+  if (!resultado.ok) {
+    mostrarToast(resultado.datos.error || 'Error al guardar', '#ff4d6d', '#fff');
+    return;
+  }
+
+  mostrarToast(idEditando ? 'Registro actualizado ✓' : 'Registro creado ✓', 'var(--ac)', '#03060e');
+  cerrarModal();
+
+  // Recarga los datos desde MySQL para mostrar el estado real
+  await cargarDatosModulo(moduloActual);
+  renderTabla();
+}
+
+/* ─────────────────────────────────────────
+   CRUD — ELIMINAR en MySQL
+───────────────────────────────────────── */
+async function eliminarReg(id) {
+  if (!confirm('¿Confirmas la eliminación?')) return;
+
+  const endpoint = MODULO_API[moduloActual];
+
+  // DELETE /api/modulos/{endpoint}/{id}
+  const { ok, datos } = await apiFetch(`${API}/modulos/${endpoint}/${id}`, 'DELETE');
+
+  if (!ok) {
+    mostrarToast(datos.error || 'Error al eliminar', '#ff4d6d', '#fff');
+    return;
+  }
+
+  mostrarToast('Registro eliminado', '#ff4d6d', '#fff');
+  await cargarDatosModulo(moduloActual);
+  renderTabla();
+}
+
+/* ─────────────────────────────────────────
+   CARGAR STATS DEL DASHBOARD DESDE MYSQL
+───────────────────────────────────────── */
+async function cargarStatsAPI() {
+  const { ok, datos } = await apiFetch(`${API}/modulos/stats/resumen`);
+  if (!ok) return;
+
+  // Actualiza los contadores del dashboard con datos reales de MySQL
+  Object.entries(datos).forEach(([modulo, total]) => {
+    const idx = Object.entries(MODULO_API).find(([, v]) => v === modulo)?.[0];
+    if (idx !== undefined) datos_modulo[idx] = Array(total).fill({}); // placeholder para conteo
+  });
+}
+
+/* ─────────────────────────────────────────
+   SOBRESCRIBE renderTabla para usar datos_modulo
+   en lugar del antiguo array `datos`
+───────────────────────────────────────── */
+function renderTabla() {
+  if (moduloActual === null) return;
+  const m   = MODULOS[moduloActual];
+  const bus = (document.getElementById('input-busqueda')?.value || '').toLowerCase();
+
+  // Usa datos_modulo en lugar del array en memoria
+  const registros = datos_modulo[moduloActual] || [];
+  const filt = registros.filter(r => Object.values(r).join(' ').toLowerCase().includes(bus));
+
+  document.getElementById('tabla-head').innerHTML =
+    `<tr>${m.cols.map(c => `<th>${c}</th>`).join('')}<th>Acciones</th></tr>`;
+
+  const tb = document.getElementById('tabla-body');
+  if (!filt.length) {
+    tb.innerHTML = `<tr><td colspan="${m.cols.length + 1}"
+      style="text-align:center;padding:50px;color:var(--txt2)">
+      Sin registros — haz clic en "Nuevo Registro" para comenzar</td></tr>`;
+  } else {
+    const icoEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const icoDel  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>`;
+    tb.innerHTML  = filt.map(r => `
+      <tr>
+        ${m.fila(r).map(v => `<td>${v}</td>`).join('')}
+        <td><div class="ac-cel">
+          <button class="bico ed"  onclick="editarReg(${r._id})"    title="Editar">${icoEdit}</button>
+          <button class="bico el"  onclick="eliminarReg(${r._id})"  title="Eliminar">${icoDel}</button>
+        </div></td>
+      </tr>`).join('');
+  }
+  document.getElementById('contador').textContent = `${filt.length} registros`;
+}
+
+/* ─────────────────────────────────────────
+   ABRIR MÓDULO — ahora carga datos de MySQL
+───────────────────────────────────────── */
+async function irModulo(idx) {
+  moduloActual  = idx;
+  vistaAnterior = document.getElementById('vista-modulos').style.display !== 'none'
+    ? 'modulos' : 'dashboard';
+
+  const m = MODULOS[idx];
+  mostrarVista('vista-modulo');
+  document.getElementById('header-titulo').textContent = m.nombre;
+  document.getElementById('mh-icon').innerHTML    = m.icono;
+  document.getElementById('mh-icon').style.background = m.ib;
+  document.getElementById('mh-nombre').textContent = m.nombre;
+  document.getElementById('mh-desc').textContent   = m.desc;
+  document.getElementById('crud-titulo').textContent = 'Registros — ' + m.nombre;
+  document.getElementById('crud-sub').textContent   = m.desc;
+
+  const inp = document.getElementById('input-busqueda');
+  if (inp) inp.value = '';
+
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('activo', n.getAttribute('onclick') === `irModulo(${idx})`);
+  });
+
+  // Muestra indicador de carga mientras trae los datos de MySQL
+  document.getElementById('tabla-body').innerHTML =
+    `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--txt2)">
+      ⏳ Cargando datos...
+    </td></tr>`;
+
+  // Carga los datos reales desde MySQL
+  await cargarDatosModulo(idx);
+  renderTabla();
+}
+
+/* ─────────────────────────────────────────
+   MODO CLARO / OSCURO
+───────────────────────────────────────── */
+function toggleModo() {
+  const body  = document.body;
+  const btn   = document.getElementById('btn-modo');
+  const icono = document.getElementById('icono-modo');
+
+  body.classList.toggle('modo-claro');
+  btn.classList.add('girando');
+  setTimeout(() => btn.classList.remove('girando'), 420);
+
+  if (body.classList.contains('modo-claro')) {
+    icono.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  } else {
+    icono.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+  }
+
+  // Redibuja los gráficos con el nuevo tema
+  if (document.getElementById('vista-dashboard').style.display !== 'none') {
+    renderDashboard();
+  }
+}
+
+/* ─────────────────────────────────────────
+   SIDEBAR MÓVIL
+───────────────────────────────────────── */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('abierto');
+}
+
+/* ─────────────────────────────────────────
+   TECLA ESCAPE — cierra el modal
+───────────────────────────────────────── */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
 mostrarVista('vista-dashboard');
 renderDashboard();
 

@@ -908,7 +908,8 @@ body {
   <!-- FIN CARD -->
 
   <div class="footer-global">
-    PulsarX Security CRM &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Multi-Tenant &nbsp;·&nbsp; Cada empresa tiene su propio espacio
+    PulsarX Security CRM &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Multi-Tenant
+    &nbsp;·&nbsp; <span id="modo-conexion" style="font-size:10px">⏳ Verificando conexión...</span>
   </div>
 
 </div>
@@ -917,150 +918,129 @@ body {
 
 <script>
 
-/* ─────────────────────────────────────────
-   BASE DE DATOS EN MEMORIA
-   En producción: tablas MySQL multi-tenant.
-   - EMPRESAS: cada registro = un tenant separado
-   - USUARIOS: vinculados a su empresa por codigo_empresa
-───────────────────────────────────────── */
-let EMPRESAS  = [];  // Empresas registradas (cada una con su código único)
-let USUARIOS  = [];  // Usuarios registrados (vinculados a su empresa)
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURACIÓN — URL del backend
+   Cambia esta IP si tu red cambia
+═══════════════════════════════════════════════════════════ */
+const API = 'http://192.168.1.77:3000/api';
 
-// Usuario y empresa demo para pruebas
-EMPRESAS.push({
-  codigo:   'EMP-DEMO01',
-  nombre:   'TechPeru SAC',
-  ruc:      '20123456789',
-  pais:     'PE',
-  sector:   'tecnologia',
-  telefono: '+51 999 000 000',
-  creado:   new Date().toISOString(),
-});
-USUARIOS.push({
-  empresa_codigo: 'EMP-DEMO01',
-  nombre:   'Carlos',
-  apellido: 'Ludeña',
-  email:    'carlos@techperu.com',
-  password: 'Admin2024!',
-  cargo:    'admin',
-});
-
-/* Variable temporal para pasar datos entre pasos del registro de empresa */
 let datosEmpresaTmp = {};
+
+/* ─────────────────────────────────────────
+   HELPER: llama al backend con fetch()
+───────────────────────────────────────── */
+async function apiBk(url, metodo = 'GET', body = null) {
+  try {
+    const ops = {
+      method:  metodo,
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (body) ops.body = JSON.stringify(body);
+    const r    = await fetch(url, ops);
+    const data = await r.json();
+    return { ok: r.ok, datos: data };
+  } catch (err) {
+    console.error('Error de red:', err);
+    return { ok: false, datos: { error: 'No se pudo conectar al servidor. Verifica que el backend esté corriendo.' } };
+  }
+}
 
 /* ─────────────────────────────────────────
    NAVEGACIÓN ENTRE PÁGINAS
 ───────────────────────────────────────── */
 function irA(pgId) {
-  // Oculta todas las páginas
   document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
-  // Muestra la solicitada
   document.getElementById(pgId).classList.add('activa');
-  // Limpia alertas
   document.querySelectorAll('.alerta').forEach(a => a.classList.remove('v'));
 }
 
 /* ─────────────────────────────────────────
    LOGIN
 ───────────────────────────────────────── */
-function iniciarSesion() {
+async function iniciarSesion() {
   limpiarAlerta('al-login');
+
   const codigo = document.getElementById('l-codigo').value.trim().toUpperCase();
   const email  = document.getElementById('l-email').value.trim().toLowerCase();
   const pass   = document.getElementById('l-pass').value;
 
-  // Validaciones básicas
-  if (!codigo) { alerta('al-login','Ingresa el código de tu empresa'); return; }
-  if (!email)  { alerta('al-login','Ingresa tu correo electrónico');   return; }
-  if (!pass)   { alerta('al-login','Ingresa tu contraseña');           return; }
+  if (!codigo) { alerta('al-login', 'Ingresa el código de tu empresa'); return; }
+  if (!email)  { alerta('al-login', 'Ingresa tu correo electrónico');   return; }
+  if (!pass)   { alerta('al-login', 'Ingresa tu contraseña');           return; }
 
-  // Verifica que la empresa exista con ese código
-  const empresa = EMPRESAS.find(e => e.codigo === codigo);
-  if (!empresa) {
-    alerta('al-login','Código de empresa no encontrado. Verifica que sea correcto.');
-    return;
-  }
-
-  // Verifica credenciales del usuario dentro de esa empresa
-  const usuario = USUARIOS.find(u =>
-    u.empresa_codigo === codigo &&
-    u.email.toLowerCase() === email &&
-    u.password === pass
-  );
-  if (!usuario) {
-    alerta('al-login','Correo o contraseña incorrectos.');
-    return;
-  }
-
-  // Éxito: guarda sesión
-  sessionStorage.setItem('pulsarx_sesion', JSON.stringify({
-    nombre:   usuario.nombre,
-    apellido: usuario.apellido,
-    email:    usuario.email,
-    cargo:    usuario.cargo,
-    empresa:  empresa.nombre,
-    codigo:   empresa.codigo,
-    tenant:   empresa.codigo,
-  }));
-
-  // Animación de éxito
   const btn = document.getElementById('btn-login');
-  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg> Acceso concedido...`;
-  btn.className = 'btn-main btn-green';
+  btn.innerHTML = '⏳ Verificando...';
   btn.disabled  = true;
 
-  setTimeout(() => {
-    // Redirige al CRM — ambos archivos deben estar en la misma carpeta
-    window.location.href = 'index.html';
-  }, 1000);
-}
+  const { ok, datos } = await apiBk(`${API}/auth/login`, 'POST', {
+    codigo_empresa: codigo,
+    email,
+    password: pass,
+  });
 
-function olvideClave() {
-  const email = document.getElementById('l-email').value.trim();
-  if (!email) { alerta('al-login','Ingresa primero tu correo para recuperar la contraseña'); return; }
-  const el = document.getElementById('al-login');
-  el.className = 'alerta al-inf v';
-  document.getElementById('al-login-txt').textContent =
-    `📧 Se enviará un enlace de recuperación a ${email} (disponible al conectar MySQL)`;
+  if (!ok) {
+    alerta('al-login', datos.error || 'Credenciales incorrectas');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar al Sistema`;
+    btn.disabled = false;
+    return;
+  }
+
+  // Guarda token y sesión
+  sessionStorage.setItem('pulsarx_token', datos.token);
+  sessionStorage.setItem('pulsarx_sesion', JSON.stringify({
+    nombre:   datos.usuario.nombre,
+    apellido: datos.usuario.apellido,
+    email:    datos.usuario.email,
+    cargo:    datos.usuario.cargo,
+    empresa:  datos.empresa.nombre,
+    codigo:   datos.empresa.codigo,
+  }));
+
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg> Acceso concedido...`;
+  btn.className = 'btn-main btn-green';
+
+  setTimeout(() => { window.location.href = 'index.html'; }, 900);
 }
 
 /* ─────────────────────────────────────────
-   REGISTRO DE USUARIO (con código de empresa)
+   OLVIDÉ MI CONTRASEÑA
 ───────────────────────────────────────── */
-function validarCodigoEmpresa() {
-  const codigo = document.getElementById('ru-codigo').value.trim().toUpperCase();
-  const found  = document.getElementById('emp-found');
-  if (codigo.length < 6) { found.style.display='none'; return; }
-
-  const emp = EMPRESAS.find(e => e.codigo === codigo);
-  if (emp) {
-    found.style.display = 'block';
-    found.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;
-                  background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.2);
-                  border-radius:8px;font-size:12px">
-        <svg style="width:14px;height:14px;color:var(--grn);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="m9 12 2 2 4-4"/>
-        </svg>
-        <span style="color:var(--grn)">Empresa encontrada: <strong>${emp.nombre}</strong></span>
-      </div>`;
-  } else {
-    found.style.display = 'block';
-    found.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;
-                  background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);
-                  border-radius:8px;font-size:12px">
-        <svg style="width:14px;height:14px;color:var(--red);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
-        <span style="color:var(--red)">Código no encontrado. Verifica con el administrador de tu empresa.</span>
-      </div>`;
-  }
+function olvideClave() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { alerta('al-login', 'Ingresa primero tu correo'); return; }
+  const al = document.getElementById('al-login');
+  al.className = 'alerta al-inf v';
+  document.getElementById('al-login-txt').textContent =
+    `📧 Enlace de recuperación enviado a ${email}`;
 }
 
-function registrarUsuario() {
+/* ─────────────────────────────────────────
+   VALIDAR CÓDIGO DE EMPRESA EN TIEMPO REAL
+───────────────────────────────────────── */
+document.getElementById('l-codigo').addEventListener('blur', async function () {
+  const codigo = this.value.trim().toUpperCase();
+  if (codigo.length < 6) return;
+
+  const { ok, datos } = await apiBk(`${API}/empresas/validar/${codigo}`);
+  limpiarAlerta('al-login');
+
+  if (ok && datos.existe) {
+    const al = document.getElementById('al-login');
+    al.className = 'alerta al-inf v';
+    document.getElementById('al-login-txt').textContent = `🏢 ${datos.empresa}`;
+  } else {
+    const al = document.getElementById('al-login');
+    al.className = 'alerta al-err v';
+    document.getElementById('al-login-txt').textContent = 'Código de empresa no encontrado';
+  }
+});
+
+/* ─────────────────────────────────────────
+   REGISTRO DE USUARIO
+───────────────────────────────────────── */
+async function registrarUsuario() {
   limpiarAlerta('al-ru');
+
   const codigo   = document.getElementById('ru-codigo').value.trim().toUpperCase();
   const nombre   = document.getElementById('ru-nombre').value.trim();
   const apellido = document.getElementById('ru-apellido').value.trim();
@@ -1069,34 +1049,57 @@ function registrarUsuario() {
   const pass     = document.getElementById('ru-pass').value;
   const pass2    = document.getElementById('ru-pass2').value;
 
-  // Validaciones
-  if (!codigo)             { alerta('al-ru','Ingresa el código de tu empresa');                 return; }
-  if (!EMPRESAS.find(e=>e.codigo===codigo)) { alerta('al-ru','Código de empresa inválido');    return; }
-  if (!nombre)             { alerta('al-ru','Ingresa tu nombre');                               return; }
-  if (!apellido)           { alerta('al-ru','Ingresa tu apellido');                             return; }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alerta('al-ru','Correo inválido'); return; }
-  if (!cargo)              { alerta('al-ru','Selecciona tu cargo');                             return; }
-  if (pass.length < 8)     { alerta('al-ru','La contraseña debe tener al menos 8 caracteres'); return; }
-  if (pass !== pass2)      { alerta('al-ru','Las contraseñas no coinciden');                    return; }
+  if (!codigo)         { alerta('al-ru', 'Ingresa el código de tu empresa');               return; }
+  if (!nombre)         { alerta('al-ru', 'Ingresa tu nombre');                             return; }
+  if (!apellido)       { alerta('al-ru', 'Ingresa tu apellido');                           return; }
+  if (!email)          { alerta('al-ru', 'Ingresa tu correo');                             return; }
+  if (!cargo)          { alerta('al-ru', 'Selecciona tu cargo');                           return; }
+  if (pass.length < 8) { alerta('al-ru', 'Contraseña mínimo 8 caracteres');               return; }
+  if (pass !== pass2)  { alerta('al-ru', 'Las contraseñas no coinciden');                  return; }
 
-  // Verifica que el email no esté ya registrado en esa empresa
-  if (USUARIOS.find(u => u.empresa_codigo === codigo && u.email.toLowerCase() === email)) {
-    alerta('al-ru','Este correo ya está registrado en esa empresa'); return;
-  }
+  const btn = document.querySelector('#pg-reg-usuario .btn-main');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Registrando...';
 
-  // Registra el usuario
-  USUARIOS.push({ empresa_codigo:codigo, nombre, apellido, email, password:pass, cargo });
+  const { ok, datos } = await apiBk(`${API}/auth/registro-usuario`, 'POST', {
+    codigo_empresa: codigo, nombre, apellido, email, password: pass, cargo,
+  });
 
-  // Pre-rellena el login y redirige con mensaje de éxito
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> Crear Mi Cuenta`;
+
+  if (!ok) { alerta('al-ru', datos.error || 'Error al registrar'); return; }
+
   document.getElementById('l-codigo').value = codigo;
   document.getElementById('l-email').value  = email;
   irA('pg-login');
 
-  // Muestra alerta de éxito en el login
   const al = document.getElementById('al-login');
   al.className = 'alerta al-ok v';
   document.getElementById('al-login-txt').textContent =
     `✅ Cuenta creada para ${nombre}. Ingresa tu contraseña para acceder.`;
+}
+
+/* ─────────────────────────────────────────
+   VALIDAR CÓDIGO EN REGISTRO DE USUARIO
+───────────────────────────────────────── */
+async function validarCodigoEmpresa() {
+  const codigo = document.getElementById('ru-codigo').value.trim().toUpperCase();
+  const found  = document.getElementById('emp-found');
+  if (codigo.length < 6) { found.style.display = 'none'; return; }
+
+  const { ok, datos } = await apiBk(`${API}/empresas/validar/${codigo}`);
+  found.style.display = 'block';
+
+  if (ok && datos.existe) {
+    found.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.2);border-radius:8px;font-size:12px">
+      <svg style="width:14px;height:14px;color:var(--grn);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      <span style="color:var(--grn)">Empresa: <strong>${datos.empresa}</strong></span></div>`;
+  } else {
+    found.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);border-radius:8px;font-size:12px">
+      <svg style="width:14px;height:14px;color:var(--red);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <span style="color:var(--red)">Código no encontrado</span></div>`;
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -1110,21 +1113,17 @@ function siguientePasoEmpresa() {
   const sector   = document.getElementById('emp-sector').value;
   const telefono = document.getElementById('emp-telefono').value.trim();
 
-  if (!nombre)   { alerta('al-emp','Ingresa el nombre de la empresa'); return; }
-  if (!ruc)      { alerta('al-emp','Ingresa el RUC / NIT de la empresa'); return; }
-  if (!sector)   { alerta('al-emp','Selecciona el sector de la empresa'); return; }
-  if (!telefono) { alerta('al-emp','Ingresa un teléfono de contacto'); return; }
+  if (!nombre)   { alerta('al-emp', 'Ingresa el nombre de la empresa'); return; }
+  if (!ruc)      { alerta('al-emp', 'Ingresa el RUC / NIT');            return; }
+  if (!sector)   { alerta('al-emp', 'Selecciona el sector');            return; }
+  if (!telefono) { alerta('al-emp', 'Ingresa un teléfono de contacto'); return; }
 
-  // Guarda temporalmente los datos de la empresa
   datosEmpresaTmp = {
-    nombre,
-    ruc,
+    nombre, ruc,
     pais:     document.getElementById('emp-pais').value,
-    sector,
-    telefono,
+    sector, telefono,
   };
 
-  // Avanza al paso 2
   document.getElementById('paso-emp-1').style.display = 'none';
   document.getElementById('paso-emp-2').style.display = 'block';
   actualizarPasos(2);
@@ -1137,43 +1136,40 @@ function volverPaso1() {
 }
 
 /* ─────────────────────────────────────────
-   REGISTRO DE EMPRESA — PASO 2 (admin)
+   REGISTRO DE EMPRESA — PASO 2
 ───────────────────────────────────────── */
-function registrarEmpresa() {
+async function registrarEmpresa() {
   const nombre   = document.getElementById('adm-nombre').value.trim();
   const apellido = document.getElementById('adm-apellido').value.trim();
   const email    = document.getElementById('adm-email').value.trim().toLowerCase();
   const pass     = document.getElementById('adm-pass').value;
   const pass2    = document.getElementById('adm-pass2').value;
 
-  if (!nombre)         { alerta('al-emp','Ingresa el nombre del administrador'); return; }
-  if (!apellido)       { alerta('al-emp','Ingresa el apellido del administrador'); return; }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alerta('al-emp','Correo inválido'); return; }
-  if (pass.length < 8) { alerta('al-emp','La contraseña debe tener mínimo 8 caracteres'); return; }
-  if (pass !== pass2)  { alerta('al-emp','Las contraseñas no coinciden'); return; }
+  if (!nombre)         { alerta('al-emp', 'Ingresa el nombre del administrador');  return; }
+  if (!apellido)       { alerta('al-emp', 'Ingresa el apellido');                  return; }
+  if (!email)          { alerta('al-emp', 'Ingresa el correo del administrador');  return; }
+  if (pass.length < 8) { alerta('al-emp', 'Contraseña mínimo 8 caracteres');       return; }
+  if (pass !== pass2)  { alerta('al-emp', 'Las contraseñas no coinciden');         return; }
 
-  // Genera un código único para el tenant (empresa)
-  // En producción: lo genera el servidor MySQL y lo almacena en la tabla de tenants
-  const codigo = 'EMP-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  const btn = document.querySelector('#paso-emp-2 .btn-green');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Creando empresa...';
 
-  // Registra la empresa en el "tenant store"
-  EMPRESAS.push({
+  const { ok, datos } = await apiBk(`${API}/auth/registro-empresa`, 'POST', {
     ...datosEmpresaTmp,
-    codigo,
-    creado: new Date().toISOString(),
+    adm_nombre:   nombre,
+    adm_apellido: apellido,
+    adm_email:    email,
+    adm_password: pass,
   });
 
-  // Registra al administrador como el primer usuario de esa empresa
-  USUARIOS.push({
-    empresa_codigo: codigo,
-    nombre, apellido, email,
-    password: pass,
-    cargo: 'admin',
-  });
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Registrar`;
 
-  // Muestra el resultado en el Paso 3
-  document.getElementById('cr-codigo').textContent   = codigo;
-  document.getElementById('tb-nombre-res').textContent = datosEmpresaTmp.nombre;
+  if (!ok) { alerta('al-emp', datos.error || 'Error al registrar la empresa'); return; }
+
+  document.getElementById('cr-codigo').textContent    = datos.codigo;
+  document.getElementById('tb-nombre-res').textContent = datos.empresa;
   document.getElementById('tb-id-res').textContent    = `Admin: ${nombre} ${apellido} · ${email}`;
 
   document.getElementById('paso-emp-2').style.display = 'none';
@@ -1182,35 +1178,34 @@ function registrarEmpresa() {
   actualizarPasos(3);
 }
 
-/* Indica qué paso está activo en el indicador visual */
+/* ─────────────────────────────────────────
+   PASOS VISUALES
+───────────────────────────────────────── */
 function actualizarPasos(activo) {
-  [1,2,3].forEach(n => {
+  [1, 2, 3].forEach(n => {
     const el = document.getElementById(`paso-${n}`);
-    el.classList.remove('activo','done');
+    el.classList.remove('activo', 'done');
     if (n < activo) el.classList.add('done');
     if (n === activo) el.classList.add('activo');
   });
 }
 
-/* Copia el código al portapapeles */
 function copiarCodigo() {
   const codigo = document.getElementById('cr-codigo').textContent;
   navigator.clipboard.writeText(codigo).then(() => {
-    const btn = document.querySelector('#paso-emp-3 .btn-main');
+    const btn  = document.querySelector('#paso-emp-3 .btn-main');
     const orig = btn.innerHTML;
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> ¡Copiado!`;
     setTimeout(() => btn.innerHTML = orig, 1800);
   });
 }
 
-/* Pre-rellena el login con el código y redirige */
 function irLoginConCodigo() {
   const codigo = document.getElementById('cr-codigo').textContent;
   const email  = document.getElementById('adm-email').value.trim();
   document.getElementById('l-codigo').value = codigo;
   document.getElementById('l-email').value  = email;
 
-  // Reinicia el form de empresa para una nueva inscripción futura
   document.getElementById('paso-emp-3').style.display = 'none';
   document.getElementById('paso-emp-1').style.display = 'block';
   document.getElementById('pie-emp').style.display    = '';
@@ -1222,23 +1217,8 @@ function irLoginConCodigo() {
   const al = document.getElementById('al-login');
   al.className = 'alerta al-ok v';
   document.getElementById('al-login-txt').textContent =
-    `✅ Empresa registrada. Ingresa tu contraseña para acceder al sistema.`;
+    `✅ Empresa registrada. Ingresa tu contraseña para acceder.`;
 }
-
-/* ─────────────────────────────────────────
-   VALIDADOR DE CÓDIGO EN EL LOGIN
-   (al salir del campo código, muestra la empresa)
-───────────────────────────────────────── */
-document.getElementById('l-codigo').addEventListener('blur', function() {
-  const codigo = this.value.trim().toUpperCase();
-  const emp = EMPRESAS.find(e => e.codigo === codigo);
-  if (emp && codigo) {
-    limpiarAlerta('al-login');
-    const al = document.getElementById('al-login');
-    al.className = 'alerta al-inf v';
-    document.getElementById('al-login-txt').textContent = `🏢 ${emp.nombre}`;
-  }
-});
 
 /* ─────────────────────────────────────────
    INDICADOR DE FORTALEZA DE CONTRASEÑA
@@ -1254,26 +1234,26 @@ function fuerza(val, prefijo) {
   if (/[0-9]/.test(val))        s++;
   if (/[^A-Za-z0-9]/.test(val)) s++;
 
-  const cols  = ['#ff4d6d','#fbbf24','#00d68f','#00e5ff'];
-  const textos= ['Muy débil','Regular','Buena','Excelente'];
+  const cols   = ['#ff4d6d', '#fbbf24', '#00d68f', '#00e5ff'];
+  const textos = ['Muy débil', 'Regular', 'Buena', 'Excelente'];
 
-  [1,2,3,4].forEach(i => {
+  [1, 2, 3, 4].forEach(i => {
     const b = document.getElementById(`${prefijo}-${i}`);
-    if (b) b.style.background = i <= s ? cols[s-1] : 'var(--borde)';
+    if (b) b.style.background = i <= s ? cols[s - 1] : 'var(--borde)';
   });
 
   const lbl = document.getElementById(`${prefijo}-lbl`);
-  if (lbl) { lbl.textContent = textos[s-1] || 'Muy débil'; lbl.style.color = cols[s-1] || '#ff4d6d'; }
+  if (lbl) { lbl.textContent = textos[s - 1] || 'Muy débil'; lbl.style.color = cols[s - 1]; }
 }
 
 /* ─────────────────────────────────────────
-   TOGGLE VISIBILIDAD DE CONTRASEÑA
+   TOGGLE OJO CONTRASEÑA
 ───────────────────────────────────────── */
 function toggleOjo(id, el) {
-  const inp  = document.getElementById(id);
+  const inp     = document.getElementById(id);
   const esTexto = inp.type === 'text';
-  inp.type = esTexto ? 'password' : 'text';
-  el.innerHTML = esTexto
+  inp.type      = esTexto ? 'password' : 'text';
+  el.innerHTML  = esTexto
     ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`
     : `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
   el.style.opacity = esTexto ? '.38' : '.7';
@@ -1292,7 +1272,6 @@ function limpiarAlerta(id) {
   document.getElementById(id)?.classList.remove('v');
 }
 
-/* Escape cierra el modal si alguno estuviera abierto */
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('pg-login').classList.contains('activa')) {
     iniciarSesion();
