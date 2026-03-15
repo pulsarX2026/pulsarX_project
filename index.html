@@ -1,1363 +1,1228 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CRM Básico - Aprende HTML, CSS y JS</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- ============================================================
-       SECCIÓN 1: ESTILOS CSS
-       Aquí se definen los colores, tamaños, animaciones y la
-       apariencia general de toda la aplicación.
-  ============================================================ -->
-  <style>
-    /* --- Variables CSS: Paleta de colores y medidas globales --- */
-    :root {
-      --color-fondo:        #0f1117;
-      --color-sidebar:      #161b27;
-      --color-header:       #1a2032;
-      --color-tarjeta:      #1e2536;
-      --color-borde:        #2a3248;
-      --color-acento:       #4f8ef7;
-      --color-acento2:      #38d9a9;
-      --color-texto:        #e2e8f0;
-      --color-texto-suave:  #7c8db5;
-      --color-peligro:      #fc5c7d;
-      --color-advertencia:  #f6c90e;
-      --ancho-sidebar:      240px;
-      --alto-header:        60px;
-      --radio-borde:        8px;
-      --fuente-principal:   'IBM Plex Sans', sans-serif;
-      --fuente-codigo:      'IBM Plex Mono', monospace;
-    }
-
-    /* --- Reset básico: elimina márgenes/paddings por defecto --- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box; /* El padding no agranda el elemento */
-    }
-
-    body {
-      font-family: var(--fuente-principal);
-      background-color: var(--color-fondo);
-      color: var(--color-texto);
-      display: flex;            /* Activa Flexbox en el body */
-      min-height: 100vh;        /* Ocupa al menos toda la pantalla */
-    }
-
-    /* ============================================================
-       SIDEBAR (Barra lateral de navegación)
-    ============================================================ */
-    #sidebar {
-      width: var(--ancho-sidebar);
-      background-color: var(--color-sidebar);
-      border-right: 1px solid var(--color-borde);
-      display: flex;
-      flex-direction: column;   /* Apila elementos en columna */
-      position: fixed;          /* Se queda fija aunque se scrollee */
-      top: 0;
-      left: 0;
-      height: 100vh;            /* Toda la altura de la ventana */
-      z-index: 100;
-      transition: transform 0.3s ease; /* Animación para ocultar/mostrar */
-    }
-
-    /* Logo / Marca en el Sidebar */
-    .sidebar-logo {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--color-borde);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sidebar-logo .icono-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--color-acento), var(--color-acento2));
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    .sidebar-logo span {
-      font-weight: 700;
-      font-size: 16px;
-      letter-spacing: 0.5px;
-    }
-
-    /* Menú de navegación */
-    .sidebar-nav {
-      padding: 16px 0;
-      flex: 1; /* Ocupa el espacio disponible */
-    }
-
-    .nav-seccion-titulo {
-      font-size: 10px;
-      font-family: var(--fuente-codigo);
-      color: var(--color-texto-suave);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      padding: 8px 24px 4px;
-      margin-top: 8px;
-    }
-
-    /* Cada enlace del menú */
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 24px;
-      color: var(--color-texto-suave);
-      cursor: pointer;          /* El cursor cambia a manito */
-      transition: all 0.2s;
-      border-left: 3px solid transparent;
-      font-size: 14px;
-      user-select: none;        /* No se puede seleccionar el texto */
-    }
-
-    .nav-item:hover {
-      background-color: rgba(79, 142, 247, 0.08);
-      color: var(--color-texto);
-    }
-
-    /* Clase que se agrega con JS al item activo */
-    .nav-item.activo {
-      background-color: rgba(79, 142, 247, 0.12);
-      color: var(--color-acento);
-      border-left-color: var(--color-acento);
-    }
-
-    .nav-item .nav-icono { font-size: 16px; }
-    .nav-item .nav-badge {
-      margin-left: auto;
-      background: var(--color-acento);
-      color: white;
-      font-size: 10px;
-      font-family: var(--fuente-codigo);
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-
-    /* Info de usuario al final del sidebar */
-    .sidebar-usuario {
-      padding: 16px 24px;
-      border-top: 1px solid var(--color-borde);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #6c63ff, var(--color-acento2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 13px;
-      flex-shrink: 0;
-    }
-
-    .usuario-info { line-height: 1.3; }
-    .usuario-nombre { font-size: 13px; font-weight: 600; }
-    .usuario-rol    { font-size: 11px; color: var(--color-texto-suave); }
-
-    /* ============================================================
-       ÁREA PRINCIPAL (todo excepto el sidebar)
-    ============================================================ */
-    #contenido-principal {
-      margin-left: var(--ancho-sidebar); /* Deja espacio para el sidebar fijo */
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* ============================================================
-       HEADER (Barra superior)
-    ============================================================ */
-    #header {
-      height: var(--alto-header);
-      background-color: var(--color-header);
-      border-bottom: 1px solid var(--color-borde);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      position: sticky;         /* Se queda pegado al hacer scroll */
-      top: 0;
-      z-index: 90;
-    }
-
-    .header-izquierda {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    /* Botón hamburguesa (visible solo en móvil) */
-    #btn-menu {
-      background: none;
-      border: none;
-      color: var(--color-texto-suave);
-      cursor: pointer;
-      font-size: 18px;
-      display: none;            /* Oculto por defecto */
-    }
-
-    .header-titulo {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--color-texto);
-    }
-
-    .header-ruta {
-      font-size: 12px;
-      color: var(--color-texto-suave);
-      font-family: var(--fuente-codigo);
-    }
-
-    .header-derecha {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    /* Barra de búsqueda del header */
-    .header-busqueda {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--color-tarjeta);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio-borde);
-      padding: 6px 12px;
-    }
-
-    .header-busqueda input {
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--color-texto);
-      font-size: 13px;
-      width: 180px;
-      font-family: var(--fuente-principal);
-    }
-
-    .header-busqueda input::placeholder { color: var(--color-texto-suave); }
-
-    /* ============================================================
-       SECCIÓN PRINCIPAL DE CONTENIDO
-    ============================================================ */
-    #seccion-contenido {
-      padding: 28px;
-      flex: 1;
-    }
-
-    /* Tarjeta contenedora */
-    .tarjeta {
-      background: var(--color-tarjeta);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio-borde);
-      overflow: hidden;
-    }
-
-    /* Cabecera de la tarjeta */
-    .tarjeta-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--color-borde);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .tarjeta-header h2 {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .tarjeta-header p {
-      font-size: 12px;
-      color: var(--color-texto-suave);
-      font-family: var(--fuente-codigo);
-      margin-top: 2px;
-    }
-
-    /* ============================================================
-       BOTONES
-    ============================================================ */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 8px 16px;
-      border-radius: var(--radio-borde);
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: var(--fuente-principal);
-      transition: all 0.2s;
-    }
-
-    .btn-primario {
-      background: var(--color-acento);
-      color: white;
-    }
-    .btn-primario:hover { background: #3d78e0; transform: translateY(-1px); }
-
-    .btn-secundario {
-      background: transparent;
-      color: var(--color-texto);
-      border: 1px solid var(--color-borde);
-    }
-    .btn-secundario:hover { background: rgba(255,255,255,0.05); }
-
-    .btn-peligro {
-      background: transparent;
-      color: var(--color-peligro);
-      border: 1px solid var(--color-peligro);
-    }
-    .btn-peligro:hover { background: rgba(252, 92, 125, 0.1); }
-
-    .btn-exito {
-      background: var(--color-acento2);
-      color: #0f1117;
-    }
-    .btn-exito:hover { background: #2bc49a; }
-
-    /* ============================================================
-       TARJETAS DE ESTADÍSTICAS (KPIs)
-    ============================================================ */
-    .grid-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-tarjeta {
-      background: var(--color-tarjeta);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio-borde);
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-tarjeta::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-    }
-    .stat-tarjeta.azul::before   { background: var(--color-acento); }
-    .stat-tarjeta.verde::before  { background: var(--color-acento2); }
-    .stat-tarjeta.rojo::before   { background: var(--color-peligro); }
-    .stat-tarjeta.amarillo::before { background: var(--color-advertencia); }
-
-    .stat-icono {
-      font-size: 22px;
-      margin-bottom: 12px;
-    }
-    .stat-valor {
-      font-size: 28px;
-      font-weight: 700;
-      font-family: var(--fuente-codigo);
-      line-height: 1;
-    }
-    .stat-etiqueta {
-      font-size: 12px;
-      color: var(--color-texto-suave);
-      margin-top: 4px;
-    }
-
-    /* ============================================================
-       TABLA DEL CRUD
-    ============================================================ */
-    .contenedor-tabla { overflow-x: auto; } /* Scroll horizontal en móvil */
-
-    table {
-      width: 100%;
-      border-collapse: collapse; /* Elimina espacio entre celdas */
-      font-size: 13px;
-    }
-
-    thead th {
-      background: rgba(0,0,0,0.2);
-      padding: 12px 16px;
-      text-align: left;
-      font-size: 11px;
-      font-family: var(--fuente-codigo);
-      color: var(--color-texto-suave);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      border-bottom: 1px solid var(--color-borde);
-      white-space: nowrap;
-    }
-
-    tbody tr {
-      border-bottom: 1px solid rgba(42, 50, 72, 0.6);
-      transition: background 0.15s;
-    }
-
-    tbody tr:hover { background: rgba(79, 142, 247, 0.05); }
-
-    tbody td {
-      padding: 14px 16px;
-      vertical-align: middle;
-    }
-
-    /* Celda con avatar + nombre */
-    .celda-cliente {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar-tabla {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    /* Chips / badges de estado */
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      font-family: var(--fuente-codigo);
-    }
-
-    .chip::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-
-    .chip-activo   { background: rgba(56,217,169,0.12); color: var(--color-acento2); }
-    .chip-activo::before { background: var(--color-acento2); }
-
-    .chip-pendiente { background: rgba(246,201,14,0.12); color: var(--color-advertencia); }
-    .chip-pendiente::before { background: var(--color-advertencia); }
-
-    .chip-inactivo { background: rgba(252,92,125,0.12); color: var(--color-peligro); }
-    .chip-inactivo::before { background: var(--color-peligro); }
-
-    .acciones-celda {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Botones pequeños para la tabla */
-    .btn-icono {
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      border: 1px solid var(--color-borde);
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      transition: all 0.2s;
-      color: var(--color-texto-suave);
-    }
-
-    .btn-icono:hover { background: rgba(255,255,255,0.08); color: var(--color-texto); }
-    .btn-icono.editar:hover  { border-color: var(--color-acento); color: var(--color-acento); }
-    .btn-icono.eliminar:hover { border-color: var(--color-peligro); color: var(--color-peligro); }
-
-    /* ============================================================
-       MODAL (Ventana emergente para el formulario)
-    ============================================================ */
-    .overlay {
-      display: none;            /* Oculto por defecto */
-      position: fixed;          /* Cubre toda la pantalla */
-      inset: 0;                 /* top/right/bottom/left = 0 */
-      background: rgba(0,0,0,0.7);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    /* Cuando se agrega clase 'visible' con JS, se muestra */
-    .overlay.visible {
-      display: flex;
-      animation: fadeIn 0.2s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.97); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-
-    .modal {
-      background: var(--color-header);
-      border: 1px solid var(--color-borde);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 480px;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--color-borde);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header h3 { font-size: 15px; font-weight: 600; }
-
-    .btn-cerrar {
-      background: none;
-      border: none;
-      color: var(--color-texto-suave);
-      font-size: 20px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0;
-    }
-    .btn-cerrar:hover { color: var(--color-texto); }
-
-    .modal-cuerpo { padding: 24px; }
-
-    /* ============================================================
-       FORMULARIO
-    ============================================================ */
-    .grupo-form {
-      margin-bottom: 16px;
-    }
-
-    .grupo-form label {
-      display: block;
-      font-size: 12px;
-      font-family: var(--fuente-codigo);
-      color: var(--color-texto-suave);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* Aplica a input, select y textarea */
-    .grupo-form input,
-    .grupo-form select,
-    .grupo-form textarea {
-      width: 100%;
-      background: var(--color-fondo);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio-borde);
-      padding: 10px 12px;
-      color: var(--color-texto);
-      font-size: 13px;
-      font-family: var(--fuente-principal);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .grupo-form input:focus,
-    .grupo-form select:focus,
-    .grupo-form textarea:focus {
-      border-color: var(--color-acento);
-    }
-
-    .grupo-form select option { background: #1e2536; }
-    .grupo-form textarea { resize: vertical; min-height: 80px; }
-
-    .grid-2-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .modal-pie {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      padding: 16px 24px;
-      border-top: 1px solid var(--color-borde);
-    }
-
-    /* ============================================================
-       TOAST / NOTIFICACIÓN
-    ============================================================ */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--color-acento2);
-      color: #0f1117;
-      padding: 12px 20px;
-      border-radius: var(--radio-borde);
-      font-size: 13px;
-      font-weight: 600;
-      z-index: 999;
-      transform: translateY(80px); /* Empieza abajo (oculto) */
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-
-    #toast.visible {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    /* ============================================================
-       BARRA DE HERRAMIENTAS SOBRE LA TABLA
-    ============================================================ */
-    .barra-herramientas {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--color-borde);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .barra-busqueda {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--color-fondo);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio-borde);
-      padding: 7px 12px;
-      flex: 1;
-      max-width: 320px;
-    }
-
-    .barra-busqueda input {
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--color-texto);
-      font-size: 13px;
-      width: 100%;
-      font-family: var(--fuente-principal);
-    }
-
-    .barra-busqueda input::placeholder { color: var(--color-texto-suave); }
-
-    .contador-registros {
-      font-size: 12px;
-      color: var(--color-texto-suave);
-      font-family: var(--fuente-codigo);
-      margin-left: auto;
-    }
-
-    /* ============================================================
-       RESPONSIVE: Ajustes para pantallas pequeñas
-    ============================================================ */
-    @media (max-width: 768px) {
-      #sidebar {
-        transform: translateX(-100%); /* Oculta el sidebar fuera de la pantalla */
-      }
-
-      #sidebar.abierto {
-        transform: translateX(0); /* Lo vuelve a mostrar */
-      }
-
-      #contenido-principal {
-        margin-left: 0; /* Sin margen cuando el sidebar está oculto */
-      }
-
-      #btn-menu {
-        display: block; /* Muestra el botón hamburguesa */
-      }
-
-      .grid-2-col {
-        grid-template-columns: 1fr; /* Una sola columna en móvil */
-      }
-
-      #seccion-contenido { padding: 16px; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PulsarX Security CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<!-- Chart.js: librería de gráficas JavaScript desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   VARIABLES CSS — tokens de diseño globales
+═══════════════════════════════════════════════════════════ */
+:root {
+  --sb:#03060e; --sb-b:#0b1a2e;
+  --fondo:#060a12; --header:#0b1220; --card:#0b1220; --borde:#12203a;
+  --txt:#dde6f5; --txt2:#3a4f6a; --inp:#060a12;
+  --ac:#00e5ff; --ac-d:rgba(0,229,255,.1); --ac-g:rgba(0,229,255,.18);
+  --vio:#8b5cf6; --vio-d:rgba(139,92,246,.1);
+  --red:#ff4d6d; --red-d:rgba(255,77,109,.1);
+  --amb:#fbbf24; --amb-d:rgba(251,191,36,.1);
+  --grn:#00d68f; --grn-d:rgba(0,214,143,.1);
+  --r:10px; --sw:265px; --hh:64px;
+  --f:'Inter',sans-serif; --fm:'JetBrains Mono',monospace; --fl:'Orbitron',sans-serif;
+}
+body.modo-claro {
+  --fondo:#eef2fc; --header:#fff; --card:#fff; --borde:#d8e2f0;
+  --txt:#08111f; --txt2:#7a8fa8; --inp:#f4f7fe;
+  --ac-d:rgba(0,229,255,.08);
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:var(--f); background:var(--fondo); color:var(--txt); display:flex; min-height:100vh; transition:background .4s,color .4s; }
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR — aplicada SOLO a los contenedores que hacen scroll:
+   #sidebar .sidebar-nav, #seccion-contenido, .modal-body, .ct
+   overflow: overlay hace que la barra flote ENCIMA del contenido
+   sin empujar ni reducir el ancho → el logo y los textos NO se mueven.
+═══════════════════════════════════════════════════════════ */
+
+/* Resetea la scrollbar del navegador en TODO (ningún elemento
+   mostrará la barra por defecto salvo los que definamos abajo) */
+* {
+  scrollbar-width: none;   /* Firefox: oculta globalmente */
+}
+*::-webkit-scrollbar {
+  display: none;           /* Webkit: oculta globalmente */
+}
+
+/* ── Selectores que SÍ tienen scrollbar personalizada ── */
+#sidebar .sidebar-nav,
+#seccion-contenido,
+.modal-body,
+.ct {
+  /* overflow: overlay: la barra flota encima, NO desplaza el contenido */
+  overflow-y: overlay;        /* Chrome/Edge — barra superpuesta */
+  scrollbar-width: thin;      /* Firefox — barra delgada */
+  scrollbar-color: rgba(0,229,255,.14) transparent; /* Firefox: thumb | track */
+}
+
+/* Hace scroll horizontal solo en tablas */
+.ct {
+  overflow-x: auto;
+  overflow-y: visible;   /* Las tablas no necesitan scroll vertical propio */
+}
+
+/* Webkit: define la barra sólo en esos contenedores */
+#sidebar .sidebar-nav::-webkit-scrollbar,
+#seccion-contenido::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+  width: 3px;            /* Hilo de 3px — casi invisible */
+}
+
+#sidebar .sidebar-nav::-webkit-scrollbar-track,
+#seccion-contenido::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;   /* Carril invisible */
+}
+
+#sidebar .sidebar-nav::-webkit-scrollbar-thumb,
+#seccion-contenido::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(0,229,255,.14);  /* Cian muy tenue */
+  border-radius: 99px;              /* Pastilla redondeada */
+}
+
+#sidebar .sidebar-nav::-webkit-scrollbar-thumb:hover,
+#seccion-contenido::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,229,255,.38);  /* Más visible al hover */
+}
+
+/* Modo claro: tono azul oscuro para contrastar sobre blanco */
+body.modo-claro #sidebar .sidebar-nav,
+body.modo-claro #seccion-contenido,
+body.modo-claro .modal-body {
+  scrollbar-color: rgba(0,130,160,.18) transparent;
+}
+body.modo-claro #sidebar .sidebar-nav::-webkit-scrollbar-thumb,
+body.modo-claro #seccion-contenido::-webkit-scrollbar-thumb,
+body.modo-claro .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(0,130,160,.18);
+}
+body.modo-claro #sidebar .sidebar-nav::-webkit-scrollbar-thumb:hover,
+body.modo-claro #seccion-contenido::-webkit-scrollbar-thumb:hover,
+body.modo-claro .modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,130,160,.44);
+}
+
+/* ── ANIMACIONES ── */
+@keyframes girar    { to{ transform:rotate(360deg); } }
+@keyframes pulso    { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.85)} }
+@keyframes parpadeo { 0%,100%{opacity:1} 50%{opacity:.1} }
+@keyframes girarBtn { to{ transform:rotate(360deg); } }
+@keyframes fadeIn   { from{opacity:0;transform:scale(.97) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes slideIn  { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes countUp  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════════ */
+#sidebar {
+  width:var(--sw); background:var(--sb); border-right:1px solid var(--sb-b);
+  display:flex; flex-direction:column; position:fixed; top:0; left:0;
+  height:100vh; z-index:100; transition:transform .3s ease;
+  /* overflow-y eliminado del sidebar raíz: la barra solo vive en .sidebar-nav */
+}
+
+/* ── LOGO GRANDE ── */
+.sidebar-logo {
+  padding:22px 18px 20px;
+  border-bottom:1px solid var(--sb-b);
+  display:flex; align-items:center; gap:14px;
+  flex-shrink:0;   /* el logo nunca se encoge ni desaparece */
+  background:var(--sb);
+}
+.logo-svg-wrap { width:52px; height:52px; flex-shrink:0; }
+.logo-svg-wrap svg { width:100%; height:100%; }
+.anillo-girar  { animation:girar 9s linear infinite; transform-origin:center; }
+.nucleo-pulsar { animation:pulso 2s ease-in-out infinite; }
+.rayo-1 { animation:parpadeo 2s ease-in-out infinite; }
+.rayo-2 { animation:parpadeo 2s ease-in-out infinite 1s; }
+
+.logo-texto { display:flex; flex-direction:column; line-height:1.2; gap:3px; }
+
+.logo-nombre {
+  font-family:var(--fl); font-size:19px; font-weight:900; letter-spacing:.8px;
+  background:linear-gradient(90deg,#00e5ff 0%,#8b5cf6 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.logo-sub {
+  font-family:var(--fm); font-size:9px; color:var(--ac);
+  letter-spacing:0.8px; text-transform:uppercase; opacity:.7;
+}
+
+/* ── NAV ── */
+/* Bloque FIJO: Dashboard y Módulos — nunca dentro del scroll */
+.sidebar-nav-top {
+  flex-shrink: 0;        /* no se comprime */
+  background: var(--sb); /* mismo fondo que el sidebar */
+  padding: 6px 0 0;
+}
+
+.sidebar-nav { padding:10px 0; flex:1; overflow-y:overlay; min-height:0; overflow-x:hidden; }
+.nav-separator { height:1px; background:var(--sb-b); margin:6px 16px; }
+.nav-section-label {
+  font-size:8.5px; font-family:var(--fm); color:#1e3050;
+  text-transform:uppercase; letter-spacing:2px;
+  padding:10px 16px 3px; margin-top:4px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:9px 16px;
+  color:#2d4060; cursor:pointer; transition:all .15s ease;
+  border-left:2px solid transparent; font-size:12.5px; font-weight:500; user-select:none;
+}
+.nav-item:hover { background:rgba(0,229,255,.05); color:#6a7f99; }
+.nav-item.activo { background:var(--ac-d); color:var(--ac); border-left-color:var(--ac); }
+.nav-icono { width:16px; height:16px; flex-shrink:0; opacity:.5; transition:opacity .15s; }
+.nav-item.activo .nav-icono, .nav-item:hover .nav-icono { opacity:1; }
+.nav-badge {
+  margin-left:auto; background:var(--ac); color:#03060e;
+  font-size:9px; font-family:var(--fm); font-weight:700;
+  padding:2px 7px; border-radius:20px;
+}
+
+.sidebar-usuario {
+  padding:14px 16px; border-top:1px solid var(--sb-b);
+  display:flex; align-items:center; gap:10px;
+  flex-shrink:0;   /* nunca se comprime: siempre visible al pie */
+  position:relative; z-index:1; /* queda por encima del nav si hay overflow */
+  background:var(--sb); /* mismo fondo del sidebar para tapar cualquier scroll */
+}
+.avatar {
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,var(--vio),var(--ac));
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:12px; color:#fff; flex-shrink:0;
+}
+.usuario-nombre { font-size:12px; font-weight:600; color:#4a6080; }
+.usuario-rol    { font-size:10px; color:#1e3050; font-family:var(--fm); }
+
+/* ═══════════════════════════════════════════════════════════
+   CONTENIDO PRINCIPAL
+═══════════════════════════════════════════════════════════ */
+#contenido-principal { margin-left:var(--sw); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+/* ── HEADER ── */
+#header {
+  height:var(--hh); background:var(--header); border-bottom:1px solid var(--borde);
+  display:flex; align-items:center; justify-content:space-between; padding:0 26px;
+  position:sticky; top:0; z-index:90; transition:background .4s,border-color .4s;
+}
+.header-iz { display:flex; align-items:center; gap:14px; }
+#btn-menu  { background:none; border:none; color:var(--txt2); cursor:pointer; display:none; padding:4px; border-radius:6px; }
+#btn-menu svg { width:20px; height:20px; }
+.header-titulo { font-size:19px; font-weight:700; color:var(--txt); transition:color .4s; }
+.header-de { display:flex; align-items:center; gap:11px; }
+.hbusq { display:flex; align-items:center; gap:7px; background:var(--card); border:1px solid var(--borde); border-radius:8px; padding:7px 13px; }
+.hbusq .ico { width:14px; height:14px; opacity:.4; flex-shrink:0; }
+.hbusq input { background:none; border:none; outline:none; color:var(--txt); font-size:12.5px; width:150px; font-family:var(--f); }
+.hbusq input::placeholder { color:var(--txt2); }
+#btn-modo { width:36px; height:36px; border-radius:50%; border:1px solid var(--borde); background:var(--card); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .3s; }
+#btn-modo svg { width:16px; height:16px; color:var(--txt2); transition:color .3s; }
+#btn-modo:hover { border-color:var(--ac); box-shadow:0 0 12px var(--ac-g); }
+#btn-modo:hover svg { color:var(--ac); }
+#btn-modo.girando { animation:girarBtn .42s ease; }
+
+/* ── SECCIÓN ── */
+#seccion-contenido { padding:24px; flex:1; }
+
+/* ═══════════════════════════════════════════════════════════
+   VISTA DASHBOARD — gráficos y métricas
+═══════════════════════════════════════════════════════════ */
+#vista-dashboard { animation:slideIn .25s ease; }
+
+/* KPI superior */
+.kpi-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:14px; margin-bottom:22px;
+}
+.kpi-card {
+  background:var(--card); border:1px solid var(--borde); border-radius:var(--r);
+  padding:18px 16px; position:relative; overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.45); transition:all .25s;
+}
+.kpi-card:hover { transform:translateY(-2px); }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--kc,var(--ac)); }
+.kpi-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+.kpi-icon svg { width:18px; height:18px; }
+.kpi-val  { font-size:30px; font-weight:700; font-family:var(--fm); color:var(--txt); line-height:1; animation:countUp .5s ease; }
+.kpi-lbl  { font-size:11px; color:var(--txt2); margin-top:5px; font-weight:500; }
+.kpi-sub  { font-size:10px; color:var(--ac); font-family:var(--fm); margin-top:4px; }
+
+/* Fila de gráficos grande */
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.charts-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
+.chart-card {
+  background:var(--card); border:1px solid var(--borde); border-radius:var(--r);
+  padding:18px 20px; box-shadow:0 4px 24px rgba(0,0,0,.4);
+  transition:background .4s,border-color .4s;
+}
+.chart-card.full { grid-column:1/-1; }
+.chart-title { font-size:13px; font-weight:700; color:var(--txt); margin-bottom:4px; }
+.chart-sub   { font-size:10.5px; color:var(--txt2); font-family:var(--fm); margin-bottom:16px; }
+.chart-wrap  { position:relative; }
+
+/* Tabla reciente en dashboard */
+.dash-table-row { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; }
+.dash-recent-list { list-style:none; }
+.dash-recent-list li {
+  display:flex; align-items:center; gap:12px; padding:10px 0;
+  border-bottom:1px solid var(--borde); font-size:12.5px;
+}
+.dash-recent-list li:last-child { border-bottom:none; }
+.drl-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.drl-name { font-weight:600; flex:1; }
+.drl-time { font-family:var(--fm); font-size:10.5px; color:var(--txt2); }
+
+/* Leyenda de gráfico personalizada */
+.chart-legend { display:flex; flex-wrap:wrap; gap:10px 16px; margin-top:12px; }
+.leg-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--txt2); }
+.leg-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* Progreso por módulo */
+.mod-progress-list { display:flex; flex-direction:column; gap:10px; }
+.mpl-row { display:flex; flex-direction:column; gap:4px; }
+.mpl-top { display:flex; justify-content:space-between; font-size:11.5px; }
+.mpl-name { font-weight:600; color:var(--txt); }
+.mpl-val  { font-family:var(--fm); font-size:10.5px; color:var(--txt2); }
+.mpl-bar  { height:5px; border-radius:10px; background:var(--borde); overflow:hidden; }
+.mpl-fill { height:100%; border-radius:10px; transition:width 1s ease; }
+
+/* ═══════════════════════════════════════════════════════════
+   VISTA MÓDULOS — grid de tarjetas
+═══════════════════════════════════════════════════════════ */
+#vista-modulos { animation:slideIn .25s ease; }
+.page-header { margin-bottom:20px; }
+.page-header h2 { font-size:26px; font-weight:300; color:var(--txt); letter-spacing:-0.3px; }
+.page-header h2 #nombre-usuario { color:var(--ac); font-weight:400; font-size:24px; vertical-align:middle; }
+.page-header p  { font-size:12.5px; color:var(--txt2); font-family:var(--f); font-weight:500; letter-spacing:0.3px; margin-top:5px; }
+
+.grid-modulos {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(175px,1fr));
+  gap:14px;
+}
+.modulo-card {
+  background:var(--card); border:1px solid var(--borde); border-radius:var(--r);
+  padding:20px 16px; cursor:pointer; transition:all .22s ease;
+  display:flex; flex-direction:column; gap:11px;
+  position:relative; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.modulo-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--mc,var(--ac)); }
+.modulo-card:hover { transform:translateY(-3px); border-color:var(--mc,var(--ac)); box-shadow:0 10px 32px rgba(0,0,0,.55); }
+.modulo-card:hover .mc-icon svg { opacity:1; }
+.mc-icon { width:42px; height:42px; border-radius:10px; background:var(--mic,var(--ac-d)); display:flex; align-items:center; justify-content:center; }
+.mc-icon svg { width:21px; height:21px; opacity:.8; transition:opacity .2s; }
+.mc-nombre { font-size:12.5px; font-weight:700; color:var(--txt); line-height:1.3; }
+.mc-desc   { font-size:10.5px; color:var(--txt2); line-height:1.45; flex:1; }
+.mc-badge  { font-family:var(--fm); font-size:9px; color:var(--mc,var(--ac)); background:var(--mic,var(--ac-d)); padding:2px 8px; border-radius:12px; font-weight:700; width:fit-content; }
+
+/* ═══════════════════════════════════════════════════════════
+   VISTA MÓDULO INDIVIDUAL (CRUD)
+═══════════════════════════════════════════════════════════ */
+#vista-modulo { display:none; animation:slideIn .25s ease; }
+.back-btn { display:flex; align-items:center; gap:7px; color:var(--txt2); cursor:pointer; font-size:12.5px; font-weight:600; margin-bottom:18px; width:fit-content; transition:color .2s; }
+.back-btn:hover { color:var(--ac); }
+.back-btn svg { width:16px; height:16px; }
+.mod-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.mod-header-icon { width:50px; height:50px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mod-header-icon svg { width:26px; height:26px; }
+.mod-header-text h2 { font-size:19px; font-weight:700; color:var(--txt); }
+.mod-header-text p  { font-size:11.5px; color:var(--txt2); font-family:var(--fm); margin-top:2px; }
+
+/* ── TARJETA GENERAL ── */
+.tarjeta { background:var(--card); border:1px solid var(--borde); border-radius:var(--r); overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.4); transition:background .4s,border-color .4s; }
+.tarjeta-header { padding:14px 20px; border-bottom:1px solid var(--borde); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.tarjeta-header h3 { font-size:14px; font-weight:700; color:var(--txt); }
+.tarjeta-header p  { font-size:11px; color:var(--txt2); font-family:var(--fm); margin-top:2px; }
+
+/* ── BOTONES ── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 15px; border-radius:8px; border:none; cursor:pointer; font-size:12.5px; font-weight:600; font-family:var(--f); transition:all .18s; }
+.btn svg { width:14px; height:14px; }
+.btn-primario { background:var(--ac); color:#03060e; box-shadow:0 0 14px var(--ac-g); }
+.btn-primario:hover { background:#00ccee; transform:translateY(-1px); }
+.btn-secundario { background:transparent; color:var(--txt); border:1px solid var(--borde); }
+.btn-secundario:hover { background:rgba(255,255,255,.04); }
+.btn-exito { background:var(--grn); color:#03060e; }
+.btn-exito:hover { background:#00c07f; transform:translateY(-1px); }
+
+/* ── BARRA HERRAMIENTAS ── */
+.barra-tools { padding:10px 20px; border-bottom:1px solid var(--borde); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.bsq { display:flex; align-items:center; gap:7px; background:var(--inp); border:1px solid var(--borde); border-radius:8px; padding:6px 11px; flex:1; max-width:260px; }
+.bsq .ico { width:13px; height:13px; opacity:.38; flex-shrink:0; }
+.bsq input { background:none; border:none; outline:none; color:var(--txt); font-size:12px; width:100%; font-family:var(--f); }
+.bsq input::placeholder { color:var(--txt2); }
+.fsel { background:var(--inp); border:1px solid var(--borde); border-radius:8px; padding:6px 10px; color:var(--txt); font-size:12px; cursor:pointer; font-family:var(--f); }
+.fsel option { background:#0b1220; color:#dde6f5; }
+.cnt-reg { font-size:11px; color:var(--txt2); font-family:var(--fm); margin-left:auto; }
+
+/* ── TABLA ── */
+.ct { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+thead th { background:rgba(0,0,0,.25); padding:9px 14px; text-align:left; font-size:9.5px; font-family:var(--fm); color:var(--txt2); text-transform:uppercase; letter-spacing:1.2px; border-bottom:1px solid var(--borde); white-space:nowrap; }
+body.modo-claro thead th { background:rgba(230,238,252,.95); }
+tbody tr { border-bottom:1px solid var(--borde); transition:background .1s; }
+tbody tr:hover { background:rgba(0,229,255,.03); }
+body.modo-claro tbody tr:hover { background:rgba(0,229,255,.06); }
+tbody td { padding:11px 14px; vertical-align:middle; color:var(--txt); }
+.cav { display:flex; align-items:center; gap:9px; }
+.av-mini { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; flex-shrink:0; }
+
+/* ── CHIPS ── */
+.chip { display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:600; font-family:var(--fm); }
+.chip::before { content:''; width:5px; height:5px; border-radius:50%; }
+.cg { background:var(--grn-d); color:var(--grn); } .cg::before { background:var(--grn); }
+.cr { background:var(--red-d); color:var(--red); } .cr::before { background:var(--red); }
+.ca { background:var(--amb-d); color:var(--amb); } .ca::before { background:var(--amb); }
+.cb { background:var(--ac-d);  color:var(--ac);  } .cb::before { background:var(--ac); }
+.cv { background:var(--vio-d); color:var(--vio); } .cv::before { background:var(--vio); }
+
+/* ── BOTONES ICONO ── */
+.ac-cel { display:flex; gap:5px; }
+.bico { width:27px; height:27px; border-radius:6px; border:1px solid var(--borde); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.bico svg { width:12px; height:12px; color:var(--txt2); transition:color .15s; }
+.bico.ed:hover  { border-color:var(--ac);  background:var(--ac-d);  } .bico.ed:hover  svg { color:var(--ac); }
+.bico.el:hover  { border-color:var(--red); background:var(--red-d); } .bico.el:hover  svg { color:var(--red); }
+
+/* ── MODAL ── */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); z-index:200; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(6px); }
+.overlay.visible { display:flex; animation:fadeIn .2s ease; }
+.modal { background:var(--card); border:1px solid var(--borde); border-radius:14px; width:100%; max-width:500px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.7); }
+.modal-hdr { padding:15px 20px; border-bottom:1px solid var(--borde); display:flex; justify-content:space-between; align-items:center; }
+.modal-hdr h3 { font-size:14px; font-weight:700; color:var(--txt); }
+.bcerrar { background:none; border:none; color:var(--txt2); font-size:20px; cursor:pointer; line-height:1; }
+.bcerrar:hover { color:var(--txt); }
+.modal-body { padding:18px 20px; max-height:70vh; overflow-y:auto; }
+.gf { margin-bottom:13px; }
+.gf label { display:block; font-size:9.5px; font-family:var(--fm); color:var(--txt2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.8px; }
+.gf input, .gf select, .gf textarea { width:100%; background:var(--inp); border:1px solid var(--borde); border-radius:8px; padding:8px 11px; color:var(--txt); font-size:12.5px; font-family:var(--f); outline:none; transition:border-color .2s,box-shadow .2s; }
+.gf input:focus, .gf select:focus, .gf textarea:focus { border-color:var(--ac); box-shadow:0 0 0 3px var(--ac-g); }
+.gf select option { background:#0b1220; color:#dde6f5; }
+.gf textarea { resize:vertical; min-height:65px; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.modal-pie { display:flex; justify-content:flex-end; gap:10px; padding:12px 20px; border-top:1px solid var(--borde); }
+
+/* ── TOAST ── */
+#toast { position:fixed; bottom:20px; right:20px; background:var(--ac); color:#03060e; padding:10px 18px; border-radius:10px; font-size:12.5px; font-weight:700; z-index:999; transform:translateY(80px); opacity:0; transition:all .32s cubic-bezier(.34,1.56,.64,1); box-shadow:0 4px 20px var(--ac-g); display:flex; align-items:center; gap:8px; }
+#toast.visible { transform:translateY(0); opacity:1; }
+#toast svg { width:14px; height:14px; flex-shrink:0; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) {
+  .charts-row   { grid-template-columns:1fr; }
+  .charts-row-3 { grid-template-columns:1fr; }
+  .dash-table-row { grid-template-columns:1fr; }
+}
+@media(max-width:768px) {
+  #sidebar { transform:translateX(-100%); }
+  #sidebar.abierto { transform:translateX(0); }
+  #contenido-principal { margin-left:0; }
+  #btn-menu { display:flex; }
+  .g2 { grid-template-columns:1fr; }
+  #seccion-contenido { padding:14px; }
+  .grid-modulos { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+}
+</style>
 </head>
 <body>
 
-  <!-- ============================================================
-       SIDEBAR - Barra de navegación lateral
-  ============================================================ -->
-  <aside id="sidebar">
+<!-- ═══════════════ SIDEBAR ═══════════════════════════════ -->
+<aside id="sidebar">
 
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <div class="icono-logo">💼</div>
-      <span>MiCRM</span>
+  <!-- LOGO GRANDE -->
+  <div class="sidebar-logo">
+    <div class="logo-svg-wrap">
+      <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="gN" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#00e5ff" stop-opacity="1"/>
+            <stop offset="55%"  stop-color="#00e5ff" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="26" cy="26" r="25" fill="#03060e"/>
+        <g class="anillo-girar" filter="url(#glow)">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="3 4" stroke-linecap="round" opacity="0.4"/>
+        </g>
+        <circle cx="26" cy="26" r="15" fill="none" stroke="#00e5ff" stroke-width="0.4" opacity="0.15"/>
+        <g class="rayo-1" filter="url(#glow)">
+          <line x1="26" y1="26" x2="26" y2="3"  stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+          <line x1="26" y1="26" x2="26" y2="49" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+        </g>
+        <g class="rayo-2" filter="url(#glow)">
+          <line x1="26" y1="26" x2="6"  y2="6"  stroke="#8b5cf6" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+          <line x1="26" y1="26" x2="46" y2="46" stroke="#8b5cf6" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+        </g>
+        <circle cx="26" cy="26" r="9" fill="url(#gN)" class="nucleo-pulsar" filter="url(#glow)"/>
+        <circle cx="26" cy="26" r="4" fill="#00e5ff" class="nucleo-pulsar" filter="url(#glow)"/>
+        <circle cx="26" cy="26" r="1.5" fill="white"/>
+      </svg>
     </div>
-
-    <!-- Menú de navegación -->
-    <nav class="sidebar-nav">
-      <div class="nav-seccion-titulo">Principal</div>
-
-      <!-- Cada nav-item llama a mostrarSeccion() con JS -->
-      <div class="nav-item activo" onclick="mostrarSeccion('dashboard')">
-        <span class="nav-icono">📊</span>
-        <span>Dashboard</span>
-      </div>
-      <div class="nav-item" onclick="mostrarSeccion('clientes')">
-        <span class="nav-icono">👥</span>
-        <span>Clientes</span>
-        <span class="nav-badge" id="badge-clientes">0</span>
-      </div>
-
-      <div class="nav-seccion-titulo">Más</div>
-      <div class="nav-item" onclick="mostrarSeccion('reportes')">
-        <span class="nav-icono">📈</span>
-        <span>Reportes</span>
-      </div>
-      <div class="nav-item" onclick="mostrarSeccion('config')">
-        <span class="nav-icono">⚙️</span>
-        <span>Configuración</span>
-      </div>
-    </nav>
-
-    <!-- Usuario -->
-    <div class="sidebar-usuario">
-      <div class="avatar">AD</div>
-      <div class="usuario-info">
-        <div class="usuario-nombre">Admin</div>
-        <div class="usuario-rol">Administrador</div>
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- ============================================================
-       CONTENIDO PRINCIPAL
-  ============================================================ -->
-  <div id="contenido-principal">
-
-    <!-- HEADER -->
-    <header id="header">
-      <div class="header-izquierda">
-        <!-- Botón hamburguesa para móvil -->
-        <button id="btn-menu" onclick="toggleSidebar()">☰</button>
-        <div>
-          <div class="header-titulo" id="header-titulo">Dashboard</div>
-          <div class="header-ruta" id="header-ruta">/ inicio</div>
-        </div>
-      </div>
-      <div class="header-derecha">
-        <div class="header-busqueda">
-          <span>🔍</span>
-          <input type="text" placeholder="Buscar..." />
-        </div>
-        <div class="avatar" style="cursor:pointer">AD</div>
-      </div>
-    </header>
-
-    <!-- SECCIÓN DE CONTENIDO (se intercambia con JS) -->
-    <main id="seccion-contenido">
-
-      <!-- ======================================================
-           VISTA: DASHBOARD
-      ====================================================== -->
-      <div id="vista-dashboard">
-
-        <!-- Tarjetas de estadísticas -->
-        <div class="grid-stats">
-          <div class="stat-tarjeta azul">
-            <div class="stat-icono">👥</div>
-            <div class="stat-valor" id="stat-total">0</div>
-            <div class="stat-etiqueta">Total Clientes</div>
-          </div>
-          <div class="stat-tarjeta verde">
-            <div class="stat-icono">✅</div>
-            <div class="stat-valor" id="stat-activos">0</div>
-            <div class="stat-etiqueta">Activos</div>
-          </div>
-          <div class="stat-tarjeta amarillo">
-            <div class="stat-icono">⏳</div>
-            <div class="stat-valor" id="stat-pendientes">0</div>
-            <div class="stat-etiqueta">Pendientes</div>
-          </div>
-          <div class="stat-tarjeta rojo">
-            <div class="stat-icono">❌</div>
-            <div class="stat-valor" id="stat-inactivos">0</div>
-            <div class="stat-etiqueta">Inactivos</div>
-          </div>
-        </div>
-
-        <!-- Tabla resumida en Dashboard -->
-        <div class="tarjeta">
-          <div class="tarjeta-header">
-            <div>
-              <h2>Clientes Recientes</h2>
-              <p>Últimos 5 registros</p>
-            </div>
-            <button class="btn btn-primario" onclick="mostrarSeccion('clientes')">
-              Ver todos →
-            </button>
-          </div>
-          <div class="contenedor-tabla">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Email</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-dashboard">
-                <!-- Llenada con JavaScript -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======================================================
-           VISTA: CLIENTES (CRUD completo)
-      ====================================================== -->
-      <div id="vista-clientes" style="display:none">
-        <div class="tarjeta">
-          <div class="tarjeta-header">
-            <div>
-              <h2>Gestión de Clientes</h2>
-              <p>CRUD — Crear, Leer, Actualizar, Eliminar</p>
-            </div>
-            <button class="btn btn-primario" onclick="abrirModalCrear()">
-              + Nuevo Cliente
-            </button>
-          </div>
-
-          <!-- Barra de búsqueda y filtros -->
-          <div class="barra-herramientas">
-            <div class="barra-busqueda">
-              <span>🔍</span>
-              <input type="text" id="input-busqueda" placeholder="Buscar por nombre, email..."
-                     oninput="filtrarTabla()" />
-            </div>
-
-            <!-- Filtro por estado (SELECT) -->
-            <select id="filtro-estado" onchange="filtrarTabla()"
-              style="background:var(--color-fondo);border:1px solid var(--color-borde);
-                     border-radius:var(--radio-borde);padding:7px 12px;
-                     color:var(--color-texto);font-size:13px;cursor:pointer;">
-              <option value="">Todos los estados</option>
-              <option value="activo">Activo</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
-
-            <span class="contador-registros" id="contador">0 registros</span>
-          </div>
-
-          <!-- Tabla principal de clientes -->
-          <div class="contenedor-tabla">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Cliente</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th>Empresa</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-clientes">
-                <!-- Llenada dinámicamente con JavaScript -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======================================================
-           VISTA: REPORTES (placeholder)
-      ====================================================== -->
-      <div id="vista-reportes" style="display:none">
-        <div class="tarjeta" style="padding:60px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">📈</div>
-          <h2 style="margin-bottom:8px">Reportes</h2>
-          <p style="color:var(--color-texto-suave)">
-            Esta sección estará disponible próximamente.<br>
-            Practica agregando aquí tus propias gráficas con Chart.js o D3.js.
-          </p>
-        </div>
-      </div>
-
-      <!-- ======================================================
-           VISTA: CONFIGURACIÓN (placeholder)
-      ====================================================== -->
-      <div id="vista-config" style="display:none">
-        <div class="tarjeta" style="padding:60px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">⚙️</div>
-          <h2 style="margin-bottom:8px">Configuración</h2>
-          <p style="color:var(--color-texto-suave)">
-            Aquí puedes agregar opciones de configuración del sistema.<br>
-            Practica creando formularios con inputs, checkboxes y toggles.
-          </p>
-        </div>
-      </div>
-
-    </main>
-  </div>
-
-  <!-- ============================================================
-       MODAL: Formulario para Crear / Editar cliente
-  ============================================================ -->
-  <div class="overlay" id="overlay-modal" onclick="cerrarModalSiClickFuera(event)">
-    <div class="modal" id="modal">
-
-      <div class="modal-header">
-        <h3 id="modal-titulo">Nuevo Cliente</h3>
-        <button class="btn-cerrar" onclick="cerrarModal()">×</button>
-      </div>
-
-      <div class="modal-cuerpo">
-        <!-- El atributo 'id' permite acceder al campo con JavaScript -->
-        <div class="grid-2-col">
-          <div class="grupo-form">
-            <label for="campo-nombre">Nombre</label>
-            <input type="text" id="campo-nombre" placeholder="Ej: Ana García" />
-          </div>
-          <div class="grupo-form">
-            <label for="campo-apellido">Apellido</label>
-            <input type="text" id="campo-apellido" placeholder="Ej: López" />
-          </div>
-        </div>
-
-        <div class="grupo-form">
-          <label for="campo-email">Correo Electrónico</label>
-          <input type="email" id="campo-email" placeholder="ana@empresa.com" />
-        </div>
-
-        <div class="grid-2-col">
-          <div class="grupo-form">
-            <label for="campo-telefono">Teléfono</label>
-            <input type="tel" id="campo-telefono" placeholder="+51 999 000 000" />
-          </div>
-          <div class="grupo-form">
-            <label for="campo-empresa">Empresa</label>
-            <input type="text" id="campo-empresa" placeholder="Empresa S.A." />
-          </div>
-        </div>
-
-        <div class="grupo-form">
-          <!-- SELECT: lista desplegable -->
-          <label for="campo-estado">Estado</label>
-          <select id="campo-estado">
-            <option value="activo">Activo</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
-        </div>
-
-        <div class="grupo-form">
-          <label for="campo-notas">Notas</label>
-          <textarea id="campo-notas" placeholder="Notas adicionales sobre el cliente..."></textarea>
-        </div>
-      </div>
-
-      <div class="modal-pie">
-        <button class="btn btn-secundario" onclick="cerrarModal()">Cancelar</button>
-        <button class="btn btn-exito" onclick="guardarCliente()">💾 Guardar</button>
-      </div>
-
+    <div class="logo-texto">
+      <span class="logo-nombre">PulsarX</span>
+      <span class="logo-sub">Security CRM</span>
     </div>
   </div>
 
-  <!-- Toast de notificación -->
-  <div id="toast">✓ Operación exitosa</div>
+  <!-- ÍTEMS FIJOS: Dashboard y Módulos — fuera del scroll -->
+  <div class="sidebar-nav-top">
+    <div class="nav-item activo" onclick="irVista('dashboard')">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="irVista('modulos')">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="6" height="6" rx="1"/><rect x="9" y="3" width="6" height="6" rx="1"/><rect x="16" y="3" width="6" height="6" rx="1"/><rect x="2" y="10" width="6" height="6" rx="1"/><rect x="9" y="10" width="6" height="6" rx="1"/><rect x="16" y="10" width="6" height="6" rx="1"/><rect x="2" y="17" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1"/><rect x="16" y="17" width="6" height="6" rx="1"/></svg>
+      <span>Módulos</span>
+      <span class="nav-badge" id="nb-total">22</span>
+    </div>
+    <div style="height:1px;background:var(--sb-b);margin:4px 0 2px"></div>
+  </div>
 
+  <!-- NAVEGACIÓN CON SCROLL — solo módulos individuales -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Accesos</div>
 
-  <!-- ============================================================
-       SECCIÓN 2: JAVASCRIPT
-       Aquí está toda la lógica de la aplicación.
-       Lee los comentarios para entender cada parte.
-  ============================================================ -->
-  <script>
+    <div class="nav-item" onclick="irModulo(0)">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Alumnos</span>
+    </div>
+    <div class="nav-item" onclick="irModulo(1)">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      <span>Colaboradores</span>
+    </div>
+    <div class="nav-item" onclick="irModulo(2)">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Visitas</span>
+    </div>
+    <div class="nav-item" onclick="irModulo(3)">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+      <span>Proveedores</span>
+    </div>
+    <div class="nav-item" onclick="irModulo(4)">
+      <svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Eventos</span>
+    </div>
 
-    // ===========================================================
-    // DATOS: Array de objetos (simula una base de datos)
-    // Cada objeto representa un cliente con sus propiedades.
-    // ===========================================================
-    let clientes = [
-      { id: 1, nombre: "Ana",    apellido: "García",   email: "ana@empresa.com",    telefono: "+51 999 111 222", empresa: "TechPeru SAC",    estado: "activo",    notas: "Cliente desde 2022" },
-      { id: 2, nombre: "Luis",   apellido: "Quispe",   email: "luis@gmail.com",     telefono: "+51 998 222 333", empresa: "Soluciones SRL",  estado: "pendiente", notas: "" },
-      { id: 3, nombre: "María",  apellido: "Torres",   email: "maria@corp.pe",      telefono: "+51 997 333 444", empresa: "CorpLima SA",     estado: "activo",    notas: "Renovación en diciembre" },
-      { id: 4, nombre: "Carlos", apellido: "Mendoza",  email: "carlos@negocios.pe", telefono: "+51 996 444 555", empresa: "Negocios Andes",  estado: "inactivo",  notas: "Dar seguimiento" },
-      { id: 5, nombre: "Rosa",   apellido: "Vargas",   email: "rosa@digital.com",   telefono: "+51 995 555 666", empresa: "Digital Works",   estado: "activo",    notas: "" },
-    ];
+    <div class="nav-separator"></div>
+    <div class="nav-section-label">Operaciones</div>
 
-    // Variable para saber qué cliente se está editando (null = crear nuevo)
-    let idEditando = null;
+    <div class="nav-item" onclick="irModulo(5)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v3h-7V8zM3 21h17M5 17v4M14 17v4"/></svg><span>Estacionamiento</span></div>
+    <div class="nav-item" onclick="irModulo(6)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg><span>Mov. Activos</span></div>
+    <div class="nav-item" onclick="irModulo(7)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Gestión Accesos</span></div>
+    <div class="nav-item" onclick="irModulo(8)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Rondas</span></div>
+    <div class="nav-item" onclick="irModulo(9)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg><span>Incidentes</span></div>
+    <div class="nav-item" onclick="irModulo(10)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Bitácora</span></div>
+    <div class="nav-item" onclick="irModulo(11)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Vigilancia</span></div>
 
-    // Contador para generar IDs únicos automáticamente
-    let siguienteId = 6;
+    <div class="nav-separator"></div>
+    <div class="nav-section-label">Gestión</div>
 
+    <div class="nav-item" onclick="irModulo(12)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>Extintores</span></div>
+    <div class="nav-item" onclick="irModulo(13)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg><span>Llaves</span></div>
+    <div class="nav-item" onclick="irModulo(14)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg><span>Inventarios</span></div>
+    <div class="nav-item" onclick="irModulo(15)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Mantenimiento</span></div>
 
-    // ===========================================================
-    // FUNCIÓN: Renderizar tabla de clientes
-    // Lee el array 'clientes', filtra según búsqueda,
-    // y construye el HTML de la tabla dinámicamente.
-    // ===========================================================
-    function renderizarTabla() {
-      // Obtiene el valor del input de búsqueda (o "" si no existe)
-      const busqueda = (document.getElementById('input-busqueda')?.value || '').toLowerCase();
-      const filtroEstado = document.getElementById('filtro-estado')?.value || '';
+    <div class="nav-separator"></div>
+    <div class="nav-section-label">Servicios</div>
 
-      // FILTER: crea un nuevo array con los clientes que cumplan la condición
-      const clientesFiltrados = clientes.filter(c => {
-        const textoCompleto = `${c.nombre} ${c.apellido} ${c.email} ${c.empresa}`.toLowerCase();
-        const coincideTexto  = textoCompleto.includes(busqueda);
-        const coincideEstado = filtroEstado === '' || c.estado === filtroEstado;
-        return coincideTexto && coincideEstado; // Ambas condiciones deben cumplirse
-      });
+    <div class="nav-item" onclick="irModulo(16)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg><span>Recojo Alumnos</span></div>
+    <div class="nav-item" onclick="irModulo(17)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Objetos Perdidos</span></div>
+    <div class="nav-item" onclick="irModulo(18)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg><span>Altas y Bajas</span></div>
+    <div class="nav-item" onclick="irModulo(19)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg><span>Gestión Riesgos</span></div>
+    <div class="nav-item" onclick="irModulo(20)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Sismos</span></div>
+    <div class="nav-item" onclick="irModulo(21)"><svg class="nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v3h-7V8zM3 21h17M5 17v4M14 17v4"/></svg><span>Transporte</span></div>
+  </nav>
 
-      // Selecciona el <tbody> de la tabla
-      const tbody = document.getElementById('tabla-clientes');
+  <div class="sidebar-usuario">
+    <div class="avatar">CL</div>
+    <div>
+      <div class="usuario-nombre">Carlos Ludeña</div>
+      <div class="usuario-rol">Administrador</div>
+    </div>
+  </div>
+</aside>
 
-      // Si no hay resultados, muestra un mensaje
-      if (clientesFiltrados.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" style="text-align:center;padding:40px;color:var(--color-texto-suave)">
-              Sin resultados para tu búsqueda
-            </td>
-          </tr>`;
-        document.getElementById('contador').textContent = '0 registros';
-        return;
+<!-- ═══════════════ CONTENIDO PRINCIPAL ═══════════════════ -->
+<div id="contenido-principal">
+
+  <header id="header">
+    <div class="header-iz">
+      <button id="btn-menu" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="header-titulo" id="header-titulo">Dashboard</div>
+    </div>
+    <div class="header-de">
+      <div class="hbusq">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar..."/>
+      </div>
+      <button id="btn-modo" onclick="toggleModo()" title="Cambiar modo">
+        <span id="icono-modo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+        </span>
+      </button>
+      <div class="avatar" style="cursor:pointer">CL</div>
+    </div>
+  </header>
+
+  <main id="seccion-contenido">
+
+    <!-- ══════════════════ VISTA: DASHBOARD ══════════════════ -->
+    <div id="vista-dashboard">
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kc:#00e5ff">
+          <div class="kpi-icon" style="background:rgba(0,229,255,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-modulos">22</div>
+          <div class="kpi-lbl">Módulos Activos</div>
+          <div class="kpi-sub">↑ Sistema completo</div>
+        </div>
+        <div class="kpi-card" style="--kc:#00d68f">
+          <div class="kpi-icon" style="background:rgba(0,214,143,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00d68f" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-registros">0</div>
+          <div class="kpi-lbl">Total Registros</div>
+          <div class="kpi-sub">Todos los módulos</div>
+        </div>
+        <div class="kpi-card" style="--kc:#fbbf24">
+          <div class="kpi-icon" style="background:rgba(251,191,36,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-incidentes">0</div>
+          <div class="kpi-lbl">Incidentes Abiertos</div>
+          <div class="kpi-sub">Requieren atención</div>
+        </div>
+        <div class="kpi-card" style="--kc:#8b5cf6">
+          <div class="kpi-icon" style="background:rgba(139,92,246,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-accesos">0</div>
+          <div class="kpi-lbl">Accesos Hoy</div>
+          <div class="kpi-sub">Alumnos + colabs.</div>
+        </div>
+        <div class="kpi-card" style="--kc:#ff4d6d">
+          <div class="kpi-icon" style="background:rgba(255,77,109,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-rondas">0</div>
+          <div class="kpi-lbl">Rondas del Turno</div>
+          <div class="kpi-sub">Control activo</div>
+        </div>
+        <div class="kpi-card" style="--kc:#38bdf8">
+          <div class="kpi-icon" style="background:rgba(56,189,248,.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="kpi-val" id="kpi-activos-ext">0</div>
+          <div class="kpi-lbl">Extintores Activos</div>
+          <div class="kpi-sub">Estado operativo</div>
+        </div>
+      </div>
+
+      <!-- FILA 1: Gráfico de barras (actividad por módulo) + Pastel (distribución accesos) -->
+      <div class="charts-row">
+
+        <div class="chart-card">
+          <div class="chart-title">Actividad por Módulo</div>
+          <div class="chart-sub">Registros totales por categoría del sistema</div>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="chart-barras"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Distribución de Accesos</div>
+          <div class="chart-sub">Tipos de ingreso registrados</div>
+          <div class="chart-wrap" style="height:200px;display:flex;align-items:center;justify-content:center">
+            <canvas id="chart-pastel1" style="max-height:200px"></canvas>
+          </div>
+          <div class="chart-legend" id="legend-pastel1"></div>
+        </div>
+
+      </div>
+
+      <!-- FILA 2: Pastel incidentes + Pastel extintores + Línea temporal -->
+      <div class="charts-row-3">
+
+        <div class="chart-card">
+          <div class="chart-title">Estado de Incidentes</div>
+          <div class="chart-sub">Distribución por severidad</div>
+          <div class="chart-wrap" style="height:180px;display:flex;align-items:center;justify-content:center">
+            <canvas id="chart-pastel2" style="max-height:180px"></canvas>
+          </div>
+          <div class="chart-legend" id="legend-pastel2"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Estado de Extintores</div>
+          <div class="chart-sub">Control de vigencia</div>
+          <div class="chart-wrap" style="height:180px;display:flex;align-items:center;justify-content:center">
+            <canvas id="chart-pastel3" style="max-height:180px"></canvas>
+          </div>
+          <div class="chart-legend" id="legend-pastel3"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Rondas por Turno</div>
+          <div class="chart-sub">Distribución semanal</div>
+          <div class="chart-wrap" style="height:180px">
+            <canvas id="chart-polar"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FILA 3: Barras horizontales + Actividad reciente -->
+      <div class="dash-table-row">
+
+        <div class="chart-card">
+          <div class="chart-title">Módulos por Uso</div>
+          <div class="chart-sub">Registros por módulo (Top 10)</div>
+          <div class="mod-progress-list" id="mod-progress-list" style="margin-top:6px"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Actividad Reciente</div>
+          <div class="chart-sub">Últimos eventos del sistema</div>
+          <ul class="dash-recent-list" id="dash-recent"></ul>
+        </div>
+
+      </div>
+
+    </div>
+    <!-- FIN VISTA DASHBOARD -->
+
+    <!-- ══════════════════ VISTA: MÓDULOS ══════════════════ -->
+    <div id="vista-modulos" style="display:none">
+      <div class="page-header">
+        <h2>Le damos la bienvenida, <span id="nombre-usuario">Carlos Ludeña</span></h2>
+        <p>22 módulos activos — Seleccione un módulo para ingresar</p>
+      </div>
+      <div class="grid-modulos" id="grid-modulos"></div>
+    </div>
+
+    <!-- ══════════════════ VISTA: MÓDULO INDIVIDUAL ══════════ -->
+    <div id="vista-modulo">
+      <div class="back-btn" id="back-btn" onclick="volverDesdeModulo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+        Volver
+      </div>
+      <div class="mod-header">
+        <div class="mod-header-icon" id="mh-icon"></div>
+        <div class="mod-header-text">
+          <h2 id="mh-nombre"></h2>
+          <p id="mh-desc"></p>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-header">
+          <div><h3 id="crud-titulo"></h3><p id="crud-sub"></p></div>
+          <button class="btn btn-primario" onclick="abrirModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo Registro
+          </button>
+        </div>
+        <div class="barra-tools">
+          <div class="bsq">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="input-busqueda" placeholder="Buscar..." oninput="renderTabla()"/>
+          </div>
+          <span class="cnt-reg" id="contador">0 registros</span>
+        </div>
+        <div class="ct">
+          <table><thead id="tabla-head"></thead><tbody id="tabla-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay-modal" onclick="cerrarModalFuera(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modal-titulo">Nuevo Registro</h3>
+      <button class="bcerrar" onclick="cerrarModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-pie">
+      <button class="btn btn-secundario" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-exito" onclick="guardarRegistro()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+
+/* ─────────────────────────────────────────
+   DEFINICIÓN DE LOS 22 MÓDULOS
+───────────────────────────────────────── */
+const MODULOS = [
+  { nombre:'Acceso de Alumnos',       desc:'Registro y control de ingreso/salida de estudiantes',              color:'#00e5ff', ib:'rgba(0,229,255,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    campos:[{id:'nombre',label:'Nombre del Alumno',tipo:'text',ph:'Juan Pérez'},{id:'codigo',label:'Código',tipo:'text',ph:'ALU-001'},{id:'grado',label:'Grado/Sección',tipo:'text',ph:'3ro A'},{id:'hora',label:'Hora',tipo:'time',ph:''},{id:'tipo',label:'Tipo',tipo:'select',ops:['Ingreso','Salida']},{id:'obs',label:'Observaciones',tipo:'text',ph:'...'}],
+    cols:['Nombre','Código','Grado','Hora','Tipo','Obs.'], fila:r=>[r.nombre,r.codigo,r.grado,r.hora,chipA(r.tipo,'Ingreso'),r.obs||'—'] },
+
+  { nombre:'Acceso de Colaboradores', desc:'Control de asistencia y acceso del personal',                     color:'#8b5cf6', ib:'rgba(139,92,246,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
+    campos:[{id:'nombre',label:'Nombre',tipo:'text',ph:'Nombre completo'},{id:'dni',label:'DNI',tipo:'text',ph:'12345678'},{id:'area',label:'Área',tipo:'text',ph:'Administración'},{id:'cargo',label:'Cargo',tipo:'text',ph:'Docente'},{id:'hora',label:'Hora',tipo:'time',ph:''},{id:'tipo',label:'Movimiento',tipo:'select',ops:['Ingreso','Salida']}],
+    cols:['Nombre','DNI','Área','Cargo','Hora','Mov.'], fila:r=>[r.nombre,r.dni,r.area,r.cargo,r.hora,chipA(r.tipo,'Ingreso')] },
+
+  { nombre:'Acceso de Visitas',        desc:'Registro de personas externas que ingresan al campus',           color:'#fbbf24', ib:'rgba(251,191,36,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 14v7"/></svg>`,
+    campos:[{id:'nombre',label:'Visitante',tipo:'text',ph:'Nombre completo'},{id:'dni',label:'DNI',tipo:'text',ph:'Doc. identidad'},{id:'motivo',label:'Motivo',tipo:'text',ph:'Reunión docente'},{id:'contacto',label:'Contacto interno',tipo:'text',ph:'A quién visita'},{id:'ingreso',label:'Hora Ingreso',tipo:'time',ph:''},{id:'salida',label:'Hora Salida',tipo:'time',ph:''}],
+    cols:['Visitante','DNI','Motivo','Contacto','Ingreso','Salida'], fila:r=>[r.nombre,r.dni,r.motivo,r.contacto,r.ingreso,r.salida||'—'] },
+
+  { nombre:'Acceso de Proveedores',    desc:'Control de ingreso de proveedores y servicios externos',         color:'#ff4d6d', ib:'rgba(255,77,109,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`,
+    campos:[{id:'empresa',label:'Empresa',tipo:'text',ph:'Nombre empresa'},{id:'contacto',label:'Contacto',tipo:'text',ph:'Representante'},{id:'ruc',label:'RUC',tipo:'text',ph:'20123456789'},{id:'servicio',label:'Servicio',tipo:'text',ph:'Limpieza, Alimentos'},{id:'placa',label:'Placa',tipo:'text',ph:'ABC-123'},{id:'hora',label:'Hora Ingreso',tipo:'time',ph:''}],
+    cols:['Empresa','Contacto','RUC','Servicio','Placa','Hora'], fila:r=>[r.empresa,r.contacto,r.ruc,r.servicio,r.placa,r.hora] },
+
+  { nombre:'Acceso a Eventos',         desc:'Gestión de accesos a eventos, actividades y ceremonias',         color:'#00d68f', ib:'rgba(0,214,143,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#00d68f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>`,
+    campos:[{id:'evento',label:'Evento',tipo:'text',ph:'Graduación 2024'},{id:'asistente',label:'Asistente',tipo:'text',ph:'Nombre completo'},{id:'tipo',label:'Tipo',tipo:'select',ops:['Alumno','Apoderado','Invitado','Personal']},{id:'ticket',label:'N° Ticket',tipo:'text',ph:'TKT-001'},{id:'fecha',label:'Fecha',tipo:'date',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Confirmado','Pendiente','Cancelado']}],
+    cols:['Evento','Asistente','Tipo','Ticket','Fecha','Estado'], fila:r=>[r.evento,r.asistente,r.tipo,r.ticket,r.fecha,chipE(r.estado)] },
+
+  { nombre:'Gestión de Estacionamientos', desc:'Control de espacios y vehículos en el campus',               color:'#38bdf8', ib:'rgba(56,189,248,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v3h-7V8zM3 21h17M5 17v4M14 17v4"/></svg>`,
+    campos:[{id:'placa',label:'Placa',tipo:'text',ph:'ABC-123'},{id:'propietario',label:'Propietario',tipo:'text',ph:'Nombre completo'},{id:'tipo',label:'Tipo',tipo:'select',ops:['Auto','Moto','Camioneta','Bus','Otro']},{id:'espacio',label:'Espacio N°',tipo:'text',ph:'E-01'},{id:'ingreso',label:'Hora Ingreso',tipo:'time',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Ocupado','Libre','Reservado']}],
+    cols:['Placa','Propietario','Tipo','Espacio','Ingreso','Estado'], fila:r=>[r.placa,r.propietario,r.tipo,r.espacio,r.ingreso,chipE(r.estado)] },
+
+  { nombre:'Movimiento de Activos',    desc:'Registro de traslado y movimiento de bienes institucionales',   color:'#a78bfa', ib:'rgba(167,139,250,.12)',  icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+    campos:[{id:'activo',label:'Activo',tipo:'text',ph:'Laptop HP'},{id:'codigo',label:'Código',tipo:'text',ph:'ACT-001'},{id:'origen',label:'Origen',tipo:'text',ph:'Almacén'},{id:'destino',label:'Destino',tipo:'text',ph:'Aula 301'},{id:'responsable',label:'Responsable',tipo:'text',ph:'Nombre'},{id:'fecha',label:'Fecha',tipo:'date',ph:''}],
+    cols:['Activo','Código','Origen','Destino','Responsable','Fecha'], fila:r=>[r.activo,r.codigo,r.origen,r.destino,r.responsable,r.fecha] },
+
+  { nombre:'Gestión de Accesos',       desc:'Administración de permisos, credenciales y zonas',              color:'#0ea5e9', ib:'rgba(14,165,233,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    campos:[{id:'persona',label:'Persona',tipo:'text',ph:'Nombre completo'},{id:'zona',label:'Zona',tipo:'text',ph:'Laboratorio'},{id:'nivel',label:'Nivel',tipo:'select',ops:['Básico','Intermedio','Restringido','Total']},{id:'inicio',label:'Fecha Inicio',tipo:'date',ph:''},{id:'fin',label:'Fecha Fin',tipo:'date',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Activo','Suspendido','Revocado']}],
+    cols:['Persona','Zona','Nivel','Inicio','Fin','Estado'], fila:r=>[r.persona,r.zona,r.nivel,r.inicio,r.fin,chipE(r.estado)] },
+
+  { nombre:'Control de Rondas',        desc:'Seguimiento de rondas y recorridos de seguridad',               color:'#22d3ee', ib:'rgba(34,211,238,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    campos:[{id:'vigilante',label:'Vigilante',tipo:'text',ph:'Nombre completo'},{id:'zona',label:'Zona',tipo:'text',ph:'Bloque A'},{id:'inicio',label:'Hora Inicio',tipo:'time',ph:''},{id:'fin',label:'Hora Fin',tipo:'time',ph:''},{id:'novedad',label:'Novedad',tipo:'select',ops:['Sin novedad','Con novedad']},{id:'obs',label:'Observaciones',tipo:'text',ph:'...'}],
+    cols:['Vigilante','Zona','Inicio','Fin','Novedad','Obs.'], fila:r=>[r.vigilante,r.zona,r.inicio,r.fin,chipA(r.novedad,'Sin novedad'),r.obs||'—'] },
+
+  { nombre:'Gestión de Incidentes',    desc:'Registro y seguimiento de incidentes de seguridad',             color:'#ff4d6d', ib:'rgba(255,77,109,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    campos:[{id:'tipo',label:'Tipo',tipo:'select',ops:['Robo','Vandalismo','Accidente','Pelea','Intrusión','Otro']},{id:'lugar',label:'Lugar',tipo:'text',ph:'Patio principal'},{id:'fecha',label:'Fecha/Hora',tipo:'datetime-local',ph:''},{id:'afectado',label:'Afectado',tipo:'text',ph:'Nombre o Ninguno'},{id:'severidad',label:'Severidad',tipo:'select',ops:['Leve','Moderado','Grave','Crítico']},{id:'estado',label:'Estado',tipo:'select',ops:['Abierto','En proceso','Cerrado']}],
+    cols:['Tipo','Lugar','Fecha','Afectado','Severidad','Estado'], fila:r=>[r.tipo,r.lugar,r.fecha,r.afectado,chipS(r.severidad),chipE(r.estado)] },
+
+  { nombre:'Bitácora',                 desc:'Registro cronológico de eventos y novedades del turno',          color:'#f59e0b', ib:'rgba(245,158,11,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+    campos:[{id:'turno',label:'Turno',tipo:'select',ops:['Mañana','Tarde','Noche']},{id:'responsable',label:'Responsable',tipo:'text',ph:'Nombre'},{id:'hora',label:'Hora',tipo:'time',ph:''},{id:'tipo',label:'Tipo',tipo:'select',ops:['Novedad','Incidente','Observación','Alerta','Normal']},{id:'descripcion',label:'Descripción',tipo:'textarea',ph:'Describe el evento...'}],
+    cols:['Turno','Responsable','Hora','Tipo','Descripción'], fila:r=>[r.turno,r.responsable,r.hora,chipA(r.tipo,'Normal'),(r.descripcion||'').substring(0,30)+'...'] },
+
+  { nombre:'Control de Vigilancia',    desc:'Gestión de puestos, turnos y personal de vigilancia',            color:'#818cf8', ib:'rgba(129,140,248,.12)',  icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    campos:[{id:'vigilante',label:'Vigilante',tipo:'text',ph:'Nombre completo'},{id:'puesto',label:'Puesto',tipo:'text',ph:'Garita Principal'},{id:'turno',label:'Turno',tipo:'select',ops:['Mañana 06-14h','Tarde 14-22h','Noche 22-06h']},{id:'fecha',label:'Fecha',tipo:'date',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['En servicio','Descanso','Franco','Licencia']}],
+    cols:['Vigilante','Puesto','Turno','Fecha','Estado'], fila:r=>[r.vigilante,r.puesto,r.turno,r.fecha,chipE(r.estado)] },
+
+  { nombre:'Control de Extintores',    desc:'Registro, inspección y mantenimiento de extintores',             color:'#f43f5e', ib:'rgba(244,63,94,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>`,
+    campos:[{id:'codigo',label:'Código',tipo:'text',ph:'EXT-001'},{id:'ubicacion',label:'Ubicación',tipo:'text',ph:'Pasillo Bloque B'},{id:'tipo',label:'Tipo',tipo:'select',ops:['PQS','CO2','Agua','AFFF']},{id:'capacidad',label:'Capacidad (kg)',tipo:'text',ph:'6'},{id:'vencimiento',label:'Vencimiento',tipo:'date',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Operativo','Vencido','Recarga pendiente','Baja']}],
+    cols:['Código','Ubicación','Tipo','Cap.','Vencimiento','Estado'], fila:r=>[r.codigo,r.ubicacion,r.tipo,r.capacidad+'kg',r.vencimiento,chipE(r.estado)] },
+
+  { nombre:'Gestión de Llaves',        desc:'Control de préstamo, devolución y custodia de llaves',           color:'#eab308', ib:'rgba(234,179,8,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`,
+    campos:[{id:'llave',label:'Llave / Código',tipo:'text',ph:'LLV-Sala Servidores'},{id:'persona',label:'Quien Retira',tipo:'text',ph:'Nombre completo'},{id:'area',label:'Área',tipo:'text',ph:'TI'},{id:'prestamo',label:'Hora Préstamo',tipo:'time',ph:''},{id:'devolucion',label:'Hora Devolución',tipo:'time',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Prestada','Devuelta','Perdida']}],
+    cols:['Llave','Persona','Área','Préstamo','Devolución','Estado'], fila:r=>[r.llave,r.persona,r.area,r.prestamo,r.devolucion||'—',chipE(r.estado)] },
+
+  { nombre:'Gestión de Inventarios',   desc:'Registro y control de bienes y equipos institucionales',         color:'#06b6d4', ib:'rgba(6,182,212,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+    campos:[{id:'item',label:'Nombre del Bien',tipo:'text',ph:'Proyector Epson'},{id:'codigo',label:'Código',tipo:'text',ph:'INV-001'},{id:'categoria',label:'Categoría',tipo:'select',ops:['Electrónico','Mobiliario','Herramienta','Vehículo','Otro']},{id:'ubicacion',label:'Ubicación',tipo:'text',ph:'Almacén Central'},{id:'cantidad',label:'Cantidad',tipo:'text',ph:'1'},{id:'estado',label:'Estado',tipo:'select',ops:['Bueno','Regular','Deteriorado','Dado de baja']}],
+    cols:['Ítem','Código','Categoría','Ubicación','Cant.','Estado'], fila:r=>[r.item,r.codigo,r.categoria,r.ubicacion,r.cantidad,chipE(r.estado)] },
+
+  { nombre:'Gestión de Mantenimiento', desc:'Órdenes de trabajo y seguimiento de mantenimiento',              color:'#84cc16', ib:'rgba(132,204,22,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#84cc16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+    campos:[{id:'area',label:'Área/Equipo',tipo:'text',ph:'SSHH Bloque A'},{id:'tipo',label:'Tipo',tipo:'select',ops:['Preventivo','Correctivo','Predictivo']},{id:'tecnico',label:'Técnico',tipo:'text',ph:'Nombre del técnico'},{id:'fecha',label:'Fecha',tipo:'date',ph:''},{id:'prioridad',label:'Prioridad',tipo:'select',ops:['Baja','Media','Alta','Urgente']},{id:'estado',label:'Estado',tipo:'select',ops:['Pendiente','En proceso','Completado','Cancelado']}],
+    cols:['Área','Tipo','Técnico','Fecha','Prioridad','Estado'], fila:r=>[r.area,r.tipo,r.tecnico,r.fecha,chipS(r.prioridad),chipE(r.estado)] },
+
+  { nombre:'Recojo de Alumnos',        desc:'Control de entrega de alumnos a sus apoderados',                 color:'#ec4899', ib:'rgba(236,72,153,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    campos:[{id:'alumno',label:'Alumno',tipo:'text',ph:'Nombre completo'},{id:'grado',label:'Grado',tipo:'text',ph:'2do B'},{id:'apoderado',label:'Apoderado',tipo:'text',ph:'Nombre del apoderado'},{id:'parentesco',label:'Parentesco',tipo:'select',ops:['Padre','Madre','Tutor','Hermano/a','Otro']},{id:'hora',label:'Hora de Recojo',tipo:'time',ph:''},{id:'autorizado',label:'¿Autorizado?',tipo:'select',ops:['Sí','No']}],
+    cols:['Alumno','Grado','Apoderado','Parentesco','Hora','Autorizado'], fila:r=>[r.alumno,r.grado,r.apoderado,r.parentesco,r.hora,chipA(r.autorizado,'Sí')] },
+
+  { nombre:'Objetos Perdidos',         desc:'Registro y seguimiento de objetos encontrados o perdidos',       color:'#fb923c', ib:'rgba(251,146,60,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`,
+    campos:[{id:'objeto',label:'Descripción',tipo:'text',ph:'Mochila azul'},{id:'lugar',label:'Lugar Encontrado',tipo:'text',ph:'Biblioteca'},{id:'fecha',label:'Fecha',tipo:'date',ph:''},{id:'entregado',label:'Entregado por',tipo:'text',ph:'Nombre'},{id:'reclamado',label:'Reclamado por',tipo:'text',ph:'Propietario'},{id:'estado',label:'Estado',tipo:'select',ops:['En custodia','Devuelto','Sin reclamar']}],
+    cols:['Objeto','Lugar','Fecha','Entregado por','Reclamado por','Estado'], fila:r=>[r.objeto,r.lugar,r.fecha,r.entregado,r.reclamado||'—',chipE(r.estado)] },
+
+  { nombre:'Gestión de Altas y Bajas', desc:'Registro de ingresos y salidas de personal e inventario',        color:'#2dd4bf', ib:'rgba(45,212,191,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>`,
+    campos:[{id:'persona',label:'Nombre/Ítem',tipo:'text',ph:'Nombre o código'},{id:'tipo',label:'Tipo',tipo:'select',ops:['Alta','Baja']},{id:'categoria',label:'Categoría',tipo:'select',ops:['Personal','Alumno','Activo','Otro']},{id:'motivo',label:'Motivo',tipo:'text',ph:'Contratación, Rotura...'},{id:'fecha',label:'Fecha',tipo:'date',ph:''},{id:'responsable',label:'Responsable',tipo:'text',ph:'Quien autoriza'}],
+    cols:['Nombre/Ítem','Tipo','Categoría','Motivo','Fecha','Responsable'], fila:r=>[r.persona,chipA(r.tipo,'Alta'),r.categoria,r.motivo,r.fecha,r.responsable] },
+
+  { nombre:'Gestión de Riesgos',       desc:'Identificación, evaluación y mitigación de riesgos',             color:'#ef4444', ib:'rgba(239,68,68,.12)',    icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    campos:[{id:'riesgo',label:'Descripción',tipo:'text',ph:'Descripción del riesgo'},{id:'area',label:'Área/Zona',tipo:'text',ph:'Laboratorio Química'},{id:'probabilidad',label:'Probabilidad',tipo:'select',ops:['Baja','Media','Alta','Muy alta']},{id:'impacto',label:'Impacto',tipo:'select',ops:['Leve','Moderado','Grave','Catastrófico']},{id:'medida',label:'Medida de Control',tipo:'text',ph:'Acción preventiva'},{id:'estado',label:'Estado',tipo:'select',ops:['Identificado','En tratamiento','Mitigado','Aceptado']}],
+    cols:['Riesgo','Área','Probabilidad','Impacto','Medida','Estado'], fila:r=>[r.riesgo,r.area,chipS(r.probabilidad),chipS(r.impacto),r.medida,chipE(r.estado)] },
+
+  { nombre:'Gestión de Sismos',        desc:'Registro de simulacros, sismos y protocolos de evacuación',      color:'#f97316', ib:'rgba(249,115,22,.12)',   icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    campos:[{id:'tipo',label:'Tipo de Evento',tipo:'select',ops:['Simulacro','Sismo real','Alerta temprana']},{id:'fecha',label:'Fecha y Hora',tipo:'datetime-local',ph:''},{id:'magnitud',label:'Magnitud/Intensidad',tipo:'text',ph:'4.5 Richter'},{id:'zona',label:'Zona Afectada',tipo:'text',ph:'Pabellón Norte'},{id:'evacuados',label:'N° Evacuados',tipo:'text',ph:'0'},{id:'estado',label:'Estado de Zona',tipo:'select',ops:['Apta','Daños menores','Daños mayores','No habitable']}],
+    cols:['Tipo','Fecha','Magnitud','Zona','Evacuados','Estado Zona'], fila:r=>[r.tipo,r.fecha,r.magnitud,r.zona,r.evacuados,chipE(r.estado)] },
+
+  { nombre:'Gestión de Transporte',    desc:'Control de rutas, vehículos y traslado de alumnos',              color:'#64748b', ib:'rgba(100,116,139,.12)',  icono:`<svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v3h-7V8zM3 21h17M5 17v4M14 17v4"/></svg>`,
+    campos:[{id:'unidad',label:'Unidad/Placa',tipo:'text',ph:'Bus-01 / ABC-123'},{id:'conductor',label:'Conductor',tipo:'text',ph:'Nombre completo'},{id:'ruta',label:'Ruta',tipo:'text',ph:'Ruta Norte'},{id:'alumnos',label:'N° Alumnos',tipo:'text',ph:'0'},{id:'salida',label:'Hora Salida',tipo:'time',ph:''},{id:'estado',label:'Estado',tipo:'select',ops:['Programado','En ruta','Completado','Cancelado']}],
+    cols:['Unidad','Conductor','Ruta','Alumnos','Salida','Estado'], fila:r=>[r.unidad,r.conductor,r.ruta,r.alumnos,r.salida,chipE(r.estado)] }
+];
+
+/* ─────────────────────────────────────────
+   ESTADO GLOBAL
+───────────────────────────────────────── */
+let datos      = {};
+let sigId      = {};
+let moduloActual   = null;
+let idEditando     = null;
+let vistaAnterior  = 'dashboard'; // para el botón "Volver"
+const chartsMap    = {};          // guarda instancias de Chart.js para destruirlas al redibujar
+
+MODULOS.forEach((_,i) => { datos[i] = []; sigId[i] = 1; });
+
+/* ─────────────────────────────────────────
+   CHIPS DE ESTADO
+───────────────────────────────────────── */
+function chipE(v) {
+  const m = {
+    'Activo':'cg','Operativo':'cg','Completado':'cg','En servicio':'cg','Devuelto':'cg',
+    'Confirmado':'cg','Sí':'cg','Mitigado':'cg','Apta':'cg','Alta':'cb','Prestada':'cb',
+    'Ocupado':'cb','Programado':'cb','Identificado':'cb','En ruta':'cb',
+    'Pendiente':'ca','En proceso':'ca','En tratamiento':'ca','Recarga pendiente':'ca',
+    'En custodia':'ca','Reservado':'ca','Descanso':'ca','Regular':'ca',
+    'Suspendido':'cr','Revocado':'cr','Cancelado':'cr','Cerrado':'cr','Vencido':'cr',
+    'Perdida':'cr','Dado de baja':'cr','No':'cr','No habitable':'cr','Baja':'cr',
+    'Sin reclamar':'cv','Franco':'cv','Licencia':'cv','Aceptado':'cv',
+  };
+  return `<span class="chip ${m[v]||'cb'}">${v||'—'}</span>`;
+}
+function chipA(v,bueno) { return `<span class="chip ${v===bueno?'cg':'cr'}">${v||'—'}</span>`; }
+function chipS(v) {
+  const m={'Baja':'cg','Bajo':'cg','Leve':'cg','Media':'ca','Moderado':'ca','Moderada':'ca','Alta':'cr','Alto':'cr','Grave':'cr','Urgente':'cr','Muy alta':'cr','Catastrófico':'cr','Crítico':'cr'};
+  return `<span class="chip ${m[v]||'cb'}">${v||'—'}</span>`;
+}
+
+/* ─────────────────────────────────────────
+   NAVEGACIÓN DE VISTAS
+───────────────────────────────────────── */
+const VISTAS = ['vista-dashboard','vista-modulos','vista-modulo'];
+
+function mostrarVista(id) {
+  VISTAS.forEach(v => { document.getElementById(v).style.display = v===id ? 'block' : 'none'; });
+}
+
+function irVista(nombre) {
+  mostrarVista('vista-'+nombre);
+  const titulos = { dashboard:'Dashboard', modulos:'Módulos del Sistema' };
+  document.getElementById('header-titulo').textContent = titulos[nombre] || nombre;
+
+  // Quita activo de TODOS los nav-item (top fijo + nav scrollable)
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+
+  // Marca el ítem correcto en el bloque fijo (Dashboard=0, Módulos=1)
+  const topItems = document.querySelectorAll('.sidebar-nav-top .nav-item');
+  if (nombre === 'dashboard' && topItems[0]) topItems[0].classList.add('activo');
+  if (nombre === 'modulos'   && topItems[1]) topItems[1].classList.add('activo');
+
+  document.getElementById('sidebar').classList.remove('abierto');
+
+  if (nombre === 'dashboard') renderDashboard();
+  if (nombre === 'modulos')   renderModulos();
+}
+
+function irModulo(idx) {
+  moduloActual  = idx;
+  vistaAnterior = VISTAS.find(v => document.getElementById(v).style.display !== 'none')?.replace('vista-','') || 'modulos';
+
+  const m = MODULOS[idx];
+  mostrarVista('vista-modulo');
+  document.getElementById('header-titulo').textContent = m.nombre;
+  document.getElementById('mh-icon').innerHTML    = m.icono;
+  document.getElementById('mh-icon').style.background = m.ib;
+  document.getElementById('mh-nombre').textContent = m.nombre;
+  document.getElementById('mh-desc').textContent   = m.desc;
+  document.getElementById('crud-titulo').textContent = 'Registros — '+m.nombre;
+  document.getElementById('crud-sub').textContent   = m.desc;
+
+  // Actualiza texto del botón volver
+  document.getElementById('back-btn').querySelector('span') && (document.getElementById('back-btn').lastChild.textContent = ' Volver a '+(vistaAnterior==='dashboard'?'Dashboard':'Módulos'));
+
+  const inp = document.getElementById('input-busqueda');
+  if(inp) inp.value = '';
+
+  // Marca nav activo
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('activo', n.getAttribute('onclick') === `irModulo(${idx})`);
+  });
+
+  renderTabla();
+}
+
+function volverDesdeModulo() {
+  irVista(vistaAnterior);
+}
+
+/* ─────────────────────────────────────────
+   RENDERIZAR PÁGINA DE MÓDULOS
+───────────────────────────────────────── */
+function renderModulos() {
+  const g = document.getElementById('grid-modulos');
+  g.innerHTML = MODULOS.map((m,i) => `
+    <div class="modulo-card" style="--mc:${m.color};--mic:${m.ib}" onclick="irModulo(${i})">
+      <div class="mc-icon">${m.icono}</div>
+      <div class="mc-nombre">${m.nombre}</div>
+      <div class="mc-desc">${m.desc}</div>
+      <div class="mc-badge">${datos[i].length} registros</div>
+    </div>
+  `).join('');
+}
+
+/* ─────────────────────────────────────────
+   DASHBOARD — GRÁFICOS
+───────────────────────────────────────── */
+function totalRegistros() { return Object.values(datos).reduce((s,a)=>s+a.length,0); }
+
+function renderDashboard() {
+  // ─ KPIs ─
+  document.getElementById('kpi-registros').textContent   = totalRegistros();
+  document.getElementById('kpi-incidentes').textContent  = (datos[9]||[]).filter(r=>r.estado==='Abierto').length;
+  document.getElementById('kpi-accesos').textContent     = (datos[0]||[]).length + (datos[1]||[]).length;
+  document.getElementById('kpi-rondas').textContent      = (datos[8]||[]).length;
+  document.getElementById('kpi-activos-ext').textContent = (datos[12]||[]).filter(r=>r.estado==='Operativo').length;
+
+  // ─ Helpers de Chart.js ─
+  const isDark = !document.body.classList.contains('modo-claro');
+  const gridC  = isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)';
+  const tickC  = isDark ? '#3a4f6a' : '#94a3b8';
+  const bg     = isDark ? '#0b1220' : '#fff';
+
+  function makeChart(id, config) {
+    if (chartsMap[id]) chartsMap[id].destroy();
+    const ctx = document.getElementById(id)?.getContext('2d');
+    if (!ctx) return;
+    chartsMap[id] = new Chart(ctx, config);
+  }
+
+  // ─ CHART 1: Barras — actividad por módulo ─
+  const nombresCortos = ['Alumnos','Colabs.','Visitas','Proveed.','Eventos','Estac.','Act.Mvt','Accesos','Rondas','Incid.','Bitácora','Vigil.','Extint.','Llaves','Invent.','Mant.','Recojo','Obj.Perd','AlBajas','Riesgos','Sismos','Transp.'];
+  const coloresBar = MODULOS.map(m=>m.color);
+  const valoresBar = MODULOS.map((_,i)=>datos[i].length);
+
+  makeChart('chart-barras',{
+    type:'bar',
+    data:{ labels:nombresCortos, datasets:[{ data:valoresBar, backgroundColor:coloresBar.map(c=>c+'33'), borderColor:coloresBar, borderWidth:1.5, borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title:t=>MODULOS[t[0].dataIndex].nombre, label:t=>`${t.raw} registros` } } },
+      scales:{
+        x:{ ticks:{ color:tickC, font:{size:9.5}, maxRotation:45 }, grid:{color:gridC} },
+        y:{ ticks:{ color:tickC, font:{size:9.5}, stepSize:1 }, grid:{color:gridC}, beginAtZero:true }
       }
-
-      // MAP: convierte cada cliente en una fila HTML (<tr>)
-      // Los backticks ` ` permiten usar variables dentro del HTML (template literals)
-      tbody.innerHTML = clientesFiltrados.map(c => `
-        <tr>
-          <td style="font-family:var(--fuente-codigo);color:var(--color-texto-suave);font-size:12px">
-            #${c.id}
-          </td>
-          <td>
-            <div class="celda-cliente">
-              <div class="avatar-tabla" style="background:${colorAvatar(c.nombre)}">
-                ${iniciales(c.nombre, c.apellido)}
-              </div>
-              <div>
-                <div style="font-weight:600">${c.nombre} ${c.apellido}</div>
-                ${c.notas ? `<div style="font-size:11px;color:var(--color-texto-suave)">${c.notas}</div>` : ''}
-              </div>
-            </div>
-          </td>
-          <td style="color:var(--color-texto-suave)">${c.email}</td>
-          <td>${c.telefono}</td>
-          <td>${c.empresa}</td>
-          <td>${chipEstado(c.estado)}</td>
-          <td>
-            <div class="acciones-celda">
-              <!-- onclick llama a editarCliente con el ID del cliente -->
-              <button class="btn-icono editar"  onclick="editarCliente(${c.id})" title="Editar">✏️</button>
-              <button class="btn-icono eliminar" onclick="eliminarCliente(${c.id})" title="Eliminar">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join(''); // .join('') une el array de strings en uno solo
-
-      // Actualiza el contador de registros
-      document.getElementById('contador').textContent = `${clientesFiltrados.length} registros`;
     }
+  });
 
+  // ─ CHART 2: Pastel — distribución de accesos ─
+  const accDatos = [datos[0].length, datos[1].length, datos[2].length, datos[3].length, datos[4].length];
+  const accLabels = ['Alumnos','Colaboradores','Visitas','Proveedores','Eventos'];
+  const accColors = ['#00e5ff','#8b5cf6','#fbbf24','#ff4d6d','#00d68f'];
 
-    // ===========================================================
-    // FUNCIÓN: Renderizar tabla resumida del Dashboard
-    // ===========================================================
-    function renderizarDashboard() {
-      // Cuenta cuántos clientes hay en cada estado
-      const total     = clientes.length;
-      const activos   = clientes.filter(c => c.estado === 'activo').length;
-      const pendientes= clientes.filter(c => c.estado === 'pendiente').length;
-      const inactivos = clientes.filter(c => c.estado === 'inactivo').length;
-
-      // Actualiza los números en las tarjetas de estadísticas
-      document.getElementById('stat-total').textContent     = total;
-      document.getElementById('stat-activos').textContent   = activos;
-      document.getElementById('stat-pendientes').textContent= pendientes;
-      document.getElementById('stat-inactivos').textContent = inactivos;
-
-      // Actualiza el badge del menú lateral
-      document.getElementById('badge-clientes').textContent = total;
-
-      // Muestra los últimos 5 clientes en el dashboard
-      const ultimos5 = clientes.slice(-5).reverse(); // Los últimos 5, en orden inverso
-      document.getElementById('tabla-dashboard').innerHTML = ultimos5.map(c => `
-        <tr>
-          <td>
-            <div class="celda-cliente">
-              <div class="avatar-tabla" style="background:${colorAvatar(c.nombre)}">
-                ${iniciales(c.nombre, c.apellido)}
-              </div>
-              <span style="font-weight:600">${c.nombre} ${c.apellido}</span>
-            </div>
-          </td>
-          <td style="color:var(--color-texto-suave)">${c.email}</td>
-          <td>${chipEstado(c.estado)}</td>
-        </tr>
-      `).join('');
+  makeChart('chart-pastel1',{
+    type:'doughnut',
+    data:{ labels:accLabels, datasets:[{ data:accDatos, backgroundColor:accColors.map(c=>c+'cc'), borderColor:accColors, borderWidth:1.5, hoverOffset:6 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:t=>`${t.label}: ${t.raw}` } } }
     }
+  });
+  document.getElementById('legend-pastel1').innerHTML = accLabels.map((l,i)=>`<div class="leg-item"><div class="leg-dot" style="background:${accColors[i]}"></div>${l}</div>`).join('');
 
+  // ─ CHART 3: Pastel — incidentes por severidad ─
+  const incSev = ['Leve','Moderado','Grave','Crítico'];
+  const incColors = ['#00d68f','#fbbf24','#ff4d6d','#8b5cf6'];
+  const incVals = incSev.map(s => datos[9].filter(r=>r.severidad===s).length);
 
-    // ===========================================================
-    // FUNCIONES AUXILIARES (helpers)
-    // ===========================================================
+  makeChart('chart-pastel2',{
+    type:'pie',
+    data:{ labels:incSev, datasets:[{ data:incVals, backgroundColor:incColors.map(c=>c+'cc'), borderColor:incColors, borderWidth:1.5, hoverOffset:5 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } }
+  });
+  document.getElementById('legend-pastel2').innerHTML = incSev.map((l,i)=>`<div class="leg-item"><div class="leg-dot" style="background:${incColors[i]}"></div>${l}</div>`).join('');
 
-    // Genera las iniciales de un nombre (ej: "Ana García" → "AG")
-    function iniciales(nombre, apellido) {
-      return (nombre[0] + apellido[0]).toUpperCase();
+  // ─ CHART 4: Pastel — extintores por estado ─
+  const extEstados = ['Operativo','Vencido','Recarga pendiente','Baja'];
+  const extColors  = ['#00d68f','#ff4d6d','#fbbf24','#64748b'];
+  const extVals    = extEstados.map(s => datos[12].filter(r=>r.estado===s).length);
+
+  makeChart('chart-pastel3',{
+    type:'doughnut',
+    data:{ labels:extEstados, datasets:[{ data:extVals, backgroundColor:extColors.map(c=>c+'cc'), borderColor:extColors, borderWidth:1.5, hoverOffset:5 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'55%', plugins:{ legend:{display:false} } }
+  });
+  document.getElementById('legend-pastel3').innerHTML = extEstados.map((l,i)=>`<div class="leg-item"><div class="leg-dot" style="background:${extColors[i]}"></div>${l}</div>`).join('');
+
+  // ─ CHART 5: Polar area — rondas por turno ─
+  const rondaTurnos = ['Mañana','Tarde','Noche'];
+  const rondaVals   = rondaTurnos.map(t => datos[8].filter(r=>r.zona?.includes(t)||r.vigilante?.includes(t)).length + datos[11].filter(r=>r.turno?.includes(t)).length);
+  const rondaColors = ['#fbbf24','#00e5ff','#8b5cf6'];
+
+  makeChart('chart-polar',{
+    type:'polarArea',
+    data:{ labels:rondaTurnos, datasets:[{ data:rondaVals.every(v=>v===0)?[1,1,1]:rondaVals, backgroundColor:rondaColors.map(c=>c+'66'), borderColor:rondaColors, borderWidth:1.5 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ color:tickC, font:{size:10}, padding:10, boxWidth:10 } } },
+      scales:{ r:{ grid:{ color:gridC }, ticks:{ color:tickC, font:{size:9}, backdropColor:'transparent' } } }
     }
+  });
 
-    // Asigna un color de fondo al avatar según la primera letra del nombre
-    function colorAvatar(nombre) {
-      const colores = ['#4f8ef7','#38d9a9','#fc5c7d','#f6c90e','#9b8ef7','#f77f4f'];
-      // charCodeAt(0) devuelve el código ASCII de la letra
-      return colores[nombre.charCodeAt(0) % colores.length];
-    }
+  // ─ Barras de progreso de módulos ─
+  const tops = MODULOS.map((m,i)=>({nombre:m.nombre,color:m.color,val:datos[i].length}))
+    .sort((a,b)=>b.val-a.val).slice(0,10);
+  const maxVal = Math.max(...tops.map(t=>t.val), 1);
+  document.getElementById('mod-progress-list').innerHTML = tops.map(t=>`
+    <div class="mpl-row">
+      <div class="mpl-top"><span class="mpl-name">${t.nombre}</span><span class="mpl-val">${t.val} reg.</span></div>
+      <div class="mpl-bar"><div class="mpl-fill" style="width:${(t.val/maxVal)*100}%;background:${t.color}"></div></div>
+    </div>
+  `).join('');
 
-    // Genera el HTML del chip de estado
-    function chipEstado(estado) {
-      const mapa = {
-        activo:    '<span class="chip chip-activo">Activo</span>',
-        pendiente: '<span class="chip chip-pendiente">Pendiente</span>',
-        inactivo:  '<span class="chip chip-inactivo">Inactivo</span>'
-      };
-      return mapa[estado] || estado;
-    }
+  // ─ Actividad reciente ─
+  const eventos = [
+    {dot:'#00e5ff', name:'Sistema iniciado',       time:'Hoy'},
+    {dot:'#8b5cf6', name:'22 módulos activos',     time:'Hoy'},
+    {dot:'#00d68f', name:'Dashboard actualizado',  time:'Ahora'},
+    {dot:'#fbbf24', name:'Registros: '+totalRegistros(), time:'En vivo'},
+  ];
+  document.getElementById('dash-recent').innerHTML = eventos.map(e=>`
+    <li>
+      <div class="drl-dot" style="background:${e.dot}"></div>
+      <span class="drl-name">${e.name}</span>
+      <span class="drl-time">${e.time}</span>
+    </li>
+  `).join('');
+}
 
+/* ─────────────────────────────────────────
+   TABLA DEL MÓDULO
+───────────────────────────────────────── */
+function renderTabla() {
+  if (moduloActual === null) return;
+  const m   = MODULOS[moduloActual];
+  const bus = (document.getElementById('input-busqueda')?.value || '').toLowerCase();
+  const filt = datos[moduloActual].filter(r => Object.values(r).join(' ').toLowerCase().includes(bus));
 
-    // ===========================================================
-    // CRUD — CREAR
-    // ===========================================================
-    function abrirModalCrear() {
-      idEditando = null; // Sin ID = modo creación
+  document.getElementById('tabla-head').innerHTML = `<tr>${m.cols.map(c=>`<th>${c}</th>`).join('')}<th>Acciones</th></tr>`;
+  const tb = document.getElementById('tabla-body');
 
-      // Limpia todos los campos del formulario
-      document.getElementById('campo-nombre').value   = '';
-      document.getElementById('campo-apellido').value = '';
-      document.getElementById('campo-email').value    = '';
-      document.getElementById('campo-telefono').value = '';
-      document.getElementById('campo-empresa').value  = '';
-      document.getElementById('campo-estado').value   = 'activo';
-      document.getElementById('campo-notas').value    = '';
+  if (!filt.length) {
+    tb.innerHTML = `<tr><td colspan="${m.cols.length+1}" style="text-align:center;padding:50px;color:var(--txt2)">Sin registros — clic en "Nuevo Registro" para comenzar</td></tr>`;
+  } else {
+    const icoEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const icoDel  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>`;
+    tb.innerHTML  = filt.map(r=>`
+      <tr>
+        ${m.fila(r).map(v=>`<td>${v}</td>`).join('')}
+        <td><div class="ac-cel">
+          <button class="bico ed" onclick="editarReg(${r._id})" title="Editar">${icoEdit}</button>
+          <button class="bico el" onclick="eliminarReg(${r._id})" title="Eliminar">${icoDel}</button>
+        </div></td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('contador').textContent = `${filt.length} registros`;
+}
 
-      document.getElementById('modal-titulo').textContent = '+ Nuevo Cliente';
-      document.getElementById('overlay-modal').classList.add('visible');
-    }
+/* ─────────────────────────────────────────
+   MODAL
+───────────────────────────────────────── */
+function abrirModal(reg=null) {
+  idEditando = reg ? reg._id : null;
+  const m = MODULOS[moduloActual];
+  document.getElementById('modal-titulo').textContent = reg ? 'Editar Registro' : 'Nuevo Registro';
 
+  const campos = m.campos;
+  let html = '';
+  for (let i=0;i<campos.length;i+=2) {
+    const c1=campos[i], c2=campos[i+1];
+    html += `<div class="${c2?'g2':''}">`;
+    html += campoHTML(c1,reg);
+    if(c2) html += campoHTML(c2,reg);
+    html += '</div>';
+  }
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('overlay-modal').classList.add('visible');
+}
 
-    // ===========================================================
-    // CRUD — GUARDAR (crea o actualiza según idEditando)
-    // ===========================================================
-    function guardarCliente() {
-      // Lee los valores de los campos del formulario
-      const nombre   = document.getElementById('campo-nombre').value.trim();
-      const apellido = document.getElementById('campo-apellido').value.trim();
-      const email    = document.getElementById('campo-email').value.trim();
-      const telefono = document.getElementById('campo-telefono').value.trim();
-      const empresa  = document.getElementById('campo-empresa').value.trim();
-      const estado   = document.getElementById('campo-estado').value;
-      const notas    = document.getElementById('campo-notas').value.trim();
+function campoHTML(c,reg) {
+  const val = reg ? (reg[c.id]||'') : '';
+  if(c.tipo==='select') {
+    const ops = c.ops.map(o=>`<option value="${o}"${val===o?' selected':''}>${o}</option>`).join('');
+    return `<div class="gf"><label for="f_${c.id}">${c.label}</label><select id="f_${c.id}">${ops}</select></div>`;
+  }
+  if(c.tipo==='textarea') return `<div class="gf"><label for="f_${c.id}">${c.label}</label><textarea id="f_${c.id}" placeholder="${c.ph}">${val}</textarea></div>`;
+  return `<div class="gf"><label for="f_${c.id}">${c.label}</label><input type="${c.tipo}" id="f_${c.id}" placeholder="${c.ph}" value="${val}"/></div>`;
+}
 
-      // Validación básica: campos obligatorios
-      if (!nombre || !apellido || !email) {
-        mostrarToast('⚠️ Nombre, apellido y email son obligatorios', '#f6c90e', '#000');
-        return; // Detiene la ejecución
-      }
+function cerrarModal() { document.getElementById('overlay-modal').classList.remove('visible'); }
+function cerrarModalFuera(e) { if(e.target===document.getElementById('overlay-modal')) cerrarModal(); }
 
-      if (idEditando === null) {
-        // CREAR: agrega un nuevo objeto al array
-        clientes.push({ id: siguienteId++, nombre, apellido, email, telefono, empresa, estado, notas });
-        mostrarToast('✓ Cliente creado correctamente');
-      } else {
-        // ACTUALIZAR: busca el índice del cliente y reemplaza sus datos
-        const indice = clientes.findIndex(c => c.id === idEditando);
-        if (indice !== -1) {
-          clientes[indice] = { id: idEditando, nombre, apellido, email, telefono, empresa, estado, notas };
-        }
-        mostrarToast('✓ Cliente actualizado');
-      }
+function guardarRegistro() {
+  const m = MODULOS[moduloActual];
+  const reg = { _id: idEditando ?? sigId[moduloActual] };
+  m.campos.forEach(c => { const el=document.getElementById('f_'+c.id); reg[c.id]=el?el.value.trim():''; });
+  if (!reg[m.campos[0].id]) { mostrarToast('Completa el campo principal','#fbbf24','#000'); return; }
+  if (idEditando===null) { datos[moduloActual].push(reg); sigId[moduloActual]++; mostrarToast('Registro creado','var(--ac)','#03060e'); }
+  else { const i=datos[moduloActual].findIndex(r=>r._id===idEditando); if(i!==-1) datos[moduloActual][i]=reg; mostrarToast('Registro actualizado','var(--ac)','#03060e'); }
+  cerrarModal(); renderTabla();
+}
 
-      cerrarModal();
-      renderizarTabla();
-      renderizarDashboard();
-    }
+function editarReg(id) { const r=datos[moduloActual].find(r=>r._id===id); if(r) abrirModal(r); }
+function eliminarReg(id) {
+  if(!confirm('¿Confirmas la eliminación?')) return;
+  datos[moduloActual]=datos[moduloActual].filter(r=>r._id!==id);
+  renderTabla(); mostrarToast('Registro eliminado','#ff4d6d','#fff');
+}
 
+/* ─────────────────────────────────────────
+   TOAST
+───────────────────────────────────────── */
+function mostrarToast(msg,fondo='var(--ac)',color='#03060e') {
+  const t=document.getElementById('toast');
+  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg><span>${msg}</span>`;
+  t.style.background=fondo; t.style.color=color;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'),2500);
+}
 
-    // ===========================================================
-    // CRUD — EDITAR (abre el modal con los datos del cliente)
-    // ===========================================================
-    function editarCliente(id) {
-      // FIND: busca el primer objeto cuya propiedad 'id' coincida
-      const cliente = clientes.find(c => c.id === id);
-      if (!cliente) return;
+/* ─────────────────────────────────────────
+   MODO CLARO / OSCURO
+───────────────────────────────────────── */
+function toggleModo() {
+  document.body.classList.toggle('modo-claro');
+  const btn=document.getElementById('btn-modo'), ico=document.getElementById('icono-modo');
+  btn.classList.add('girando'); setTimeout(()=>btn.classList.remove('girando'),420);
+  if(document.body.classList.contains('modo-claro')) {
+    ico.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  } else {
+    ico.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+  }
+  // Redibuja gráficos con nuevo tema
+  if(document.getElementById('vista-dashboard').style.display !== 'none') renderDashboard();
+}
 
-      idEditando = id; // Guarda el ID que se está editando
+/* ─────────────────────────────────────────
+   SIDEBAR MÓVIL
+───────────────────────────────────────── */
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('abierto'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarModal(); });
 
-      // Rellena el formulario con los datos actuales
-      document.getElementById('campo-nombre').value   = cliente.nombre;
-      document.getElementById('campo-apellido').value = cliente.apellido;
-      document.getElementById('campo-email').value    = cliente.email;
-      document.getElementById('campo-telefono').value = cliente.telefono;
-      document.getElementById('campo-empresa').value  = cliente.empresa;
-      document.getElementById('campo-estado').value   = cliente.estado;
-      document.getElementById('campo-notas').value    = cliente.notas;
+/* ─────────────────────────────────────────
+   INICIALIZACIÓN
+───────────────────────────────────────── */
+mostrarVista('vista-dashboard');
+renderDashboard();
 
-      document.getElementById('modal-titulo').textContent = '✏️ Editar Cliente';
-      document.getElementById('overlay-modal').classList.add('visible');
-    }
-
-
-    // ===========================================================
-    // CRUD — ELIMINAR (con confirmación del navegador)
-    // ===========================================================
-    function eliminarCliente(id) {
-      // confirm() muestra un diálogo nativo del navegador
-      const confirmar = confirm('¿Estás seguro de eliminar este cliente?');
-      if (!confirmar) return;
-
-      // FILTER: crea un nuevo array SIN el cliente con ese ID
-      clientes = clientes.filter(c => c.id !== id);
-
-      renderizarTabla();
-      renderizarDashboard();
-      mostrarToast('🗑️ Cliente eliminado', '#fc5c7d', 'white');
-    }
-
-
-    // ===========================================================
-    // FUNCIONES DEL MODAL
-    // ===========================================================
-    function cerrarModal() {
-      document.getElementById('overlay-modal').classList.remove('visible');
-    }
-
-    // Cierra el modal si el usuario hace click en el fondo oscuro
-    function cerrarModalSiClickFuera(event) {
-      // event.target es el elemento que recibió el click
-      if (event.target === document.getElementById('overlay-modal')) {
-        cerrarModal();
-      }
-    }
-
-
-    // ===========================================================
-    // FUNCIÓN: Filtrar tabla en tiempo real
-    // Se llama con oninput y onchange en los controles de filtro
-    // ===========================================================
-    function filtrarTabla() {
-      renderizarTabla();
-    }
-
-
-    // ===========================================================
-    // FUNCIÓN: Navegación entre secciones
-    // Muestra u oculta vistas cambiando display style
-    // ===========================================================
-    function mostrarSeccion(seccion) {
-      // Define qué vistas existen
-      const vistas = ['dashboard', 'clientes', 'reportes', 'config'];
-
-      // Oculta todas las vistas
-      vistas.forEach(v => {
-        document.getElementById(`vista-${v}`).style.display = 'none';
-      });
-
-      // Muestra solo la vista seleccionada
-      document.getElementById(`vista-${seccion}`).style.display = 'block';
-
-      // Actualiza los estilos del menú lateral (quita y agrega clase 'activo')
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('activo');
-      });
-
-      // querySelectorAll devuelve una lista de todos los .nav-item
-      // El índice corresponde al orden en el HTML
-      const indices = { dashboard: 0, clientes: 1, reportes: 2, config: 3 };
-      document.querySelectorAll('.nav-item')[indices[seccion]]?.classList.add('activo');
-
-      // Actualiza el título del header
-      const titulos = {
-        dashboard: ['Dashboard', '/ inicio'],
-        clientes:  ['Clientes',  '/ clientes'],
-        reportes:  ['Reportes',  '/ reportes'],
-        config:    ['Configuración', '/ configuracion']
-      };
-
-      document.getElementById('header-titulo').textContent = titulos[seccion][0];
-      document.getElementById('header-ruta').textContent   = titulos[seccion][1];
-
-      // En móvil: cierra el sidebar después de navegar
-      document.getElementById('sidebar').classList.remove('abierto');
-    }
-
-
-    // ===========================================================
-    // FUNCIÓN: Mostrar notificación (Toast)
-    // ===========================================================
-    function mostrarToast(mensaje, fondo = 'var(--color-acento2)', color = '#0f1117') {
-      const toast = document.getElementById('toast');
-      toast.textContent = mensaje;
-      toast.style.background = fondo;
-      toast.style.color = color;
-      toast.classList.add('visible');
-
-      // setTimeout: ejecuta la función después de N milisegundos
-      setTimeout(() => {
-        toast.classList.remove('visible');
-      }, 2500);
-    }
-
-
-    // ===========================================================
-    // FUNCIÓN: Toggle del sidebar en móvil
-    // ===========================================================
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('abierto');
-    }
-
-
-    // ===========================================================
-    // TECLADO: Cerrar modal con la tecla Escape
-    // ===========================================================
-    document.addEventListener('keydown', function(event) {
-      // event.key contiene la tecla presionada
-      if (event.key === 'Escape') {
-        cerrarModal();
-      }
-    });
-
-
-    // ===========================================================
-    // INICIALIZACIÓN: Se ejecuta cuando carga la página
-    // ===========================================================
-    renderizarTabla();
-    renderizarDashboard();
-
-  </script>
+</script>
 </body>
 </html>
