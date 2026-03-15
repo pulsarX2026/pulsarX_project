@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PulsarX Security CRM — Acceso</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+
+/* ══════════════════════════════════════
+   VARIABLES
+══════════════════════════════════════ */
+:root {
+  --ac:   #00e5ff;
+  --ac2:  #8b5cf6;
+  --ac-g: rgba(0,229,255,.18);
+  --red:  #ff4d6d;
+  --grn:  #00d68f;
+  --amb:  #fbbf24;
+  --fondo:#04070f;
+  --card: #080e1c;
+  --borde:#0f1e35;
+  --txt:  #e2ecff;
+  --txt2: #3a5070;
+  --inp:  #060b16;
+  --f:   'Sora', sans-serif;
+  --fm:  'JetBrains Mono', monospace;
+  --fl:  'Orbitron', sans-serif;
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family:var(--f); background:var(--fondo); color:var(--txt);
+  min-height:100vh; display:flex; align-items:center;
+  justify-content:center; overflow:hidden; position:relative;
+}
+
+/* ── FONDO ANIMADO ── */
+.bg-grid {
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px);
+  background-size:48px 48px;
+  animation:gridMove 24s linear infinite;
+}
+@keyframes gridMove { to { background-position:48px 48px; } }
+
+.orb {
+  position:fixed; border-radius:50%; filter:blur(90px);
+  pointer-events:none; z-index:0;
+  animation:orbFloat 10s ease-in-out infinite;
+}
+.orb-1 { width:500px;height:500px; background:radial-gradient(circle,rgba(0,229,255,.055) 0%,transparent 70%); top:-120px;left:-120px; }
+.orb-2 { width:420px;height:420px; background:radial-gradient(circle,rgba(139,92,246,.065) 0%,transparent 70%); bottom:-80px;right:-80px; animation-delay:-5s; }
+.orb-3 { width:280px;height:280px; background:radial-gradient(circle,rgba(0,229,255,.035) 0%,transparent 70%); top:50%;left:50%;transform:translate(-50%,-50%); animation-delay:-2.5s; }
+@keyframes orbFloat {
+  0%,100%{ transform:translate(0,0); }
+  33%    { transform:translate(18px,-18px); }
+  66%    { transform:translate(-14px,14px); }
+}
+
+/* ══════════════════════════════════════
+   CONTENEDOR PRINCIPAL
+══════════════════════════════════════ */
+.wrap {
+  position:relative; z-index:10;
+  width:100%; max-width:460px; padding:20px;
+  animation:aparecer .55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes aparecer {
+  from { opacity:0; transform:translateY(20px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* ── LOGO ── */
+.logo {
+  display:flex; align-items:center; justify-content:center;
+  gap:14px; margin-bottom:28px;
+}
+.logo-svg { width:46px; height:46px; flex-shrink:0; }
+.logo-svg svg { width:100%; height:100%; }
+.logo-txt  { display:flex; flex-direction:column; line-height:1.2; }
+.logo-nombre {
+  font-family:var(--fl); font-size:19px; font-weight:900; letter-spacing:.6px;
+  background:linear-gradient(90deg,#00e5ff,#8b5cf6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.logo-sub { font-family:var(--fm); font-size:8.5px; color:var(--ac); letter-spacing:1.5px; text-transform:uppercase; opacity:.65; }
+
+/* SVG del pulsar */
+@keyframes girar    { to{ transform:rotate(360deg); } }
+@keyframes pulso    { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.85)} }
+@keyframes parpadeo { 0%,100%{opacity:1} 50%{opacity:.1} }
+.anillo-girar  { animation:girar 9s linear infinite; transform-origin:center; }
+.nucleo-pulsar { animation:pulso 2s ease-in-out infinite; }
+.rayo-1 { animation:parpadeo 2s ease-in-out infinite; }
+.rayo-2 { animation:parpadeo 2s ease-in-out infinite 1s; }
+
+/* ── TARJETA ── */
+.card {
+  background:var(--card); border:1px solid var(--borde); border-radius:20px;
+  overflow:hidden;
+  box-shadow: 0 0 0 1px rgba(0,229,255,.04), 0 28px 80px rgba(0,0,0,.75),
+              inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+/* ── PÁGINAS (login / registro-usuario / registro-empresa) ── */
+/* Cada "página" se muestra/oculta con JS */
+.pagina { display:none; }
+.pagina.activa { display:block; animation:aparecer .3s ease; }
+
+/* ── CABECERA DE CADA PÁGINA ── */
+.pg-hdr { padding:22px 28px 0; }
+.pg-hdr h2 { font-size:18px; font-weight:700; color:var(--txt); margin-bottom:3px; }
+.pg-hdr p  { font-size:11.5px; color:var(--txt2); font-family:var(--fm); }
+
+/* Línea divisora decorativa debajo del título */
+.pg-hdr-line {
+  height:1px; background:var(--borde);
+  margin:14px 28px 0;
+  position:relative; overflow:hidden;
+}
+.pg-hdr-line::after {
+  content:''; position:absolute; left:0; top:0; height:100%;
+  width:80px; background:linear-gradient(90deg,var(--ac),transparent);
+}
+
+/* ── CUERPO DEL FORMULARIO ── */
+.pg-body { padding:20px 28px 28px; }
+
+/* ── CAMPOS ── */
+.gf { margin-bottom:15px; }
+.gf label {
+  display:block; font-size:9.5px; font-family:var(--fm);
+  color:var(--txt2); margin-bottom:6px;
+  text-transform:uppercase; letter-spacing:.8px;
+}
+.iw { position:relative; }
+.iw .ico {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:15px; height:15px; opacity:.38; pointer-events:none;
+  color:var(--txt);
+}
+.iw input, .iw select, .iw textarea {
+  width:100%; background:var(--inp); border:1px solid var(--borde);
+  border-radius:10px; padding:11px 12px 11px 36px;
+  color:var(--txt); font-size:13px; font-family:var(--f);
+  outline:none; transition:border-color .2s, box-shadow .2s;
+}
+.iw select { cursor:pointer; }
+.iw textarea { min-height:70px; resize:vertical; padding-top:10px; }
+.iw input::placeholder, .iw textarea::placeholder { color:var(--txt2); }
+.iw input:focus, .iw select:focus, .iw textarea:focus {
+  border-color:var(--ac); box-shadow:0 0 0 3px var(--ac-g);
+}
+.iw select option { background:#080e1c; color:#e2ecff; }
+
+/* Ícono ojo contraseña */
+.eye {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:17px; height:17px; opacity:.38; cursor:pointer;
+  transition:opacity .2s; color:var(--txt);
+}
+.eye:hover { opacity:.75; }
+
+/* Grid de 2 columnas */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+
+/* ── BOTÓN PRINCIPAL ── */
+.btn-main {
+  width:100%; padding:13px;
+  border:none; border-radius:10px;
+  font-size:13.5px; font-weight:700; font-family:var(--f);
+  cursor:pointer; transition:all .22s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-main svg { width:16px; height:16px; }
+.btn-cyan {
+  background:linear-gradient(135deg,#007a94,var(--ac));
+  color:#03060e; box-shadow:0 0 18px rgba(0,229,255,.2);
+}
+.btn-cyan:hover { transform:translateY(-2px); box-shadow:0 6px 26px rgba(0,229,255,.3); }
+
+.btn-violet {
+  background:linear-gradient(135deg,#4c1d95,var(--ac2));
+  color:#fff; box-shadow:0 0 18px rgba(139,92,246,.2);
+}
+.btn-violet:hover { transform:translateY(-2px); box-shadow:0 6px 26px rgba(139,92,246,.3); }
+
+.btn-green {
+  background:linear-gradient(135deg,#065f46,var(--grn));
+  color:#03060e; box-shadow:0 0 18px rgba(0,214,143,.2);
+}
+.btn-green:hover { transform:translateY(-2px); }
+
+/* ── BOTÓN SECUNDARIO OUTLINE ── */
+.btn-outline {
+  width:100%; padding:11px;
+  background:transparent; border:1px solid var(--borde);
+  border-radius:10px; color:var(--txt2);
+  font-size:13px; font-weight:500; font-family:var(--f);
+  cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-outline svg { width:15px; height:15px; }
+.btn-outline:hover { background:rgba(255,255,255,.04); border-color:#1e3a5f; color:var(--txt); }
+
+/* ── SEPARADOR ── */
+.sep {
+  display:flex; align-items:center; gap:12px;
+  color:var(--txt2); font-size:11px; margin:14px 0;
+}
+.sep::before,.sep::after { content:''; flex:1; height:1px; background:var(--borde); }
+
+/* ── OPCIONES LOGIN (recordar + olvidé) ── */
+.login-opts {
+  display:flex; align-items:center; justify-content:space-between;
+  margin:-2px 0 16px;
+}
+.chk {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; color:var(--txt2); cursor:pointer; user-select:none;
+}
+.chk input { accent-color:var(--ac); cursor:pointer; }
+.link-a {
+  font-size:12px; color:var(--ac); cursor:pointer;
+  font-family:var(--fm); text-decoration:none; opacity:.75;
+  transition:opacity .2s;
+}
+.link-a:hover { opacity:1; text-decoration:underline; }
+
+/* ── ALERTA ── */
+.alerta {
+  display:none; padding:10px 13px; border-radius:9px;
+  font-size:12px; font-weight:500; margin-bottom:14px;
+  align-items:center; gap:8px;
+}
+.alerta.v { display:flex; }
+.alerta svg { width:14px; height:14px; flex-shrink:0; }
+.al-err { background:rgba(255,77,109,.08); border:1px solid rgba(255,77,109,.2); color:var(--red); }
+.al-ok  { background:rgba(0,214,143,.08);  border:1px solid rgba(0,214,143,.2);  color:var(--grn); }
+.al-inf { background:rgba(0,229,255,.06);  border:1px solid rgba(0,229,255,.15); color:var(--ac); }
+
+/* ── INDICADOR CONTRASEÑA ── */
+.ps { display:none; margin-top:6px; }
+.ps.v { display:block; }
+.ps-barras { display:flex; gap:4px; margin-bottom:4px; }
+.ps-b { flex:1; height:3px; border-radius:4px; background:var(--borde); transition:background .3s; }
+.ps-lbl { font-size:10px; font-family:var(--fm); }
+
+/* ── PIE DE PÁGINA ── */
+.pg-pie {
+  text-align:center; margin-top:16px;
+  font-size:12px; color:var(--txt2);
+}
+.pg-pie a { color:var(--ac); cursor:pointer; font-weight:600; transition:opacity .2s; }
+.pg-pie a:hover { opacity:.75; text-decoration:underline; }
+
+/* ── CÓDIGO DE EMPRESA (badge) ── */
+.tenant-badge {
+  background:rgba(0,229,255,.06); border:1px solid rgba(0,229,255,.15);
+  border-radius:10px; padding:12px 14px;
+  display:flex; align-items:center; gap:12px; margin-bottom:18px;
+}
+.tb-ico {
+  width:38px; height:38px; border-radius:9px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.tb-nombre { font-size:13.5px; font-weight:700; color:var(--txt); }
+.tb-id     { font-size:10px; color:var(--ac); font-family:var(--fm); margin-top:2px; }
+
+/* ── PASOS DE REGISTRO EMPRESA ── */
+.pasos {
+  display:flex; gap:0; margin-bottom:22px; position:relative;
+}
+.pasos::before {
+  content:''; position:absolute; top:14px; left:14px; right:14px; height:1px;
+  background:var(--borde); z-index:0;
+}
+.paso {
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  flex:1; position:relative; z-index:1;
+}
+.paso-num {
+  width:28px; height:28px; border-radius:50%; border:1px solid var(--borde);
+  background:var(--card); display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:var(--txt2); transition:all .3s;
+}
+.paso.activo .paso-num {
+  background:var(--ac); border-color:var(--ac); color:#03060e;
+  box-shadow:0 0 12px rgba(0,229,255,.3);
+}
+.paso.done .paso-num { background:var(--grn); border-color:var(--grn); color:#03060e; }
+.paso-lbl { font-size:9px; font-family:var(--fm); color:var(--txt2); text-align:center; }
+.paso.activo .paso-lbl { color:var(--ac); }
+.paso.done .paso-lbl   { color:var(--grn); }
+
+/* ── CÓDIGO DISPLAY (resultado del registro de empresa) ── */
+.codigo-resultado {
+  background:rgba(0,229,255,.05); border:1px solid rgba(0,229,255,.18);
+  border-radius:14px; padding:22px; text-align:center; margin-bottom:18px;
+}
+.cr-label { font-size:11px; color:var(--txt2); font-family:var(--fm); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+.cr-code  {
+  font-family:var(--fl); font-size:32px; font-weight:900;
+  background:linear-gradient(90deg,var(--ac),var(--ac2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  letter-spacing:4px; margin-bottom:8px;
+}
+.cr-aviso { font-size:11px; color:var(--amb); }
+
+/* ── FOOTER GLOBAL ── */
+.footer-global {
+  text-align:center; margin-top:18px;
+  font-size:10.5px; color:var(--txt2); font-family:var(--fm);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(0,229,255,.15); border-radius:99px; }
+
+/* Responsive */
+@media(max-width:500px) {
+  .pg-body  { padding:18px 20px 22px; }
+  .pg-hdr   { padding:18px 20px 0; }
+  .pg-hdr-line { margin:12px 20px 0; }
+  .g2 { grid-template-columns:1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="wrap">
+
+  <!-- ── LOGO ── -->
+  <div class="logo">
+    <div class="logo-svg">
+      <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="rg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#00e5ff" stop-opacity="1"/>
+            <stop offset="55%"  stop-color="#00e5ff" stop-opacity=".5"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="26" cy="26" r="25" fill="#03060e"/>
+        <g class="anillo-girar" filter="url(#g)">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="#00e5ff" stroke-width=".8" stroke-dasharray="3 4" stroke-linecap="round" opacity=".4"/>
+        </g>
+        <circle cx="26" cy="26" r="15" fill="none" stroke="#00e5ff" stroke-width=".4" opacity=".15"/>
+        <g class="rayo-1" filter="url(#g)">
+          <line x1="26" y1="26" x2="26" y2="3"  stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>
+          <line x1="26" y1="26" x2="26" y2="49" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>
+        </g>
+        <g class="rayo-2" filter="url(#g)">
+          <line x1="26" y1="26" x2="6"  y2="6"  stroke="#8b5cf6" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+          <line x1="26" y1="26" x2="46" y2="46" stroke="#8b5cf6" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+        </g>
+        <circle cx="26" cy="26" r="9" fill="url(#rg)" class="nucleo-pulsar" filter="url(#g)"/>
+        <circle cx="26" cy="26" r="4" fill="#00e5ff" class="nucleo-pulsar" filter="url(#g)"/>
+        <circle cx="26" cy="26" r="1.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="logo-txt">
+      <span class="logo-nombre">PulsarX</span>
+      <span class="logo-sub">Security CRM</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       TARJETA PRINCIPAL
+  ═══════════════════════════════════ -->
+  <div class="card">
+
+    <!-- ──────────────────────────────
+         PÁGINA 1: LOGIN
+    ────────────────────────────────── -->
+    <div class="pagina activa" id="pg-login">
+      <div class="pg-hdr">
+        <h2>Bienvenido de vuelta</h2>
+        <p>Ingresa tus credenciales para acceder al sistema</p>
+      </div>
+      <div class="pg-hdr-line"></div>
+
+      <div class="pg-body">
+
+        <!-- Alerta -->
+        <div class="alerta al-err" id="al-login">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="al-login-txt"></span>
+        </div>
+
+        <!-- Código de empresa -->
+        <div class="gf">
+          <label for="l-codigo">Código de empresa</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <input type="text" id="l-codigo" placeholder="Ej: EMP-A1B2C3"
+                   style="text-transform:uppercase;letter-spacing:1px"
+                   oninput="this.value=this.value.toUpperCase()"
+                   onkeydown="if(event.key==='Enter')loginSiguiente()"/>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="gf">
+          <label for="l-email">Correo electrónico</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input type="email" id="l-email" placeholder="tu@empresa.com"
+                   onkeydown="if(event.key==='Enter')iniciarSesion()"/>
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="gf">
+          <label for="l-pass">Contraseña</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="l-pass" placeholder="••••••••"
+                   onkeydown="if(event.key==='Enter')iniciarSesion()"/>
+            <svg class="eye" onclick="toggleOjo('l-pass',this)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Recordar + Olvidé -->
+        <div class="login-opts">
+          <label class="chk">
+            <input type="checkbox" id="l-recordar"/> Recordar sesión
+          </label>
+          <a class="link-a" onclick="olvideClave()">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <!-- Botón ingresar -->
+        <button class="btn-main btn-cyan" id="btn-login" onclick="iniciarSesion()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Ingresar al Sistema
+        </button>
+
+        <div class="sep">o</div>
+
+        <!-- Botones acceso social -->
+        <div class="g2" style="margin-bottom:0">
+          <button class="btn-outline">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Google
+          </button>
+          <button class="btn-outline">
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px">
+              <path d="M11.4 2H2v9.4h9.4V2z" fill="#f25022"/>
+              <path d="M22 2h-9.4v9.4H22V2z"  fill="#7fba00"/>
+              <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00a4ef"/>
+              <path d="M22 12.6h-9.4V22H22v-9.4z"  fill="#ffb900"/>
+            </svg>
+            Microsoft
+          </button>
+        </div>
+
+      </div>
+
+      <div class="pg-pie" style="padding:0 28px 22px">
+        ¿Tu empresa no está registrada?
+        <a onclick="irA('pg-reg-empresa')">Regístrala aquí</a>
+        &nbsp;·&nbsp;
+        <a onclick="irA('pg-reg-usuario')">Crear mi cuenta</a>
+      </div>
+    </div>
+    <!-- FIN PG-LOGIN -->
+
+
+    <!-- ──────────────────────────────
+         PÁGINA 2: REGISTRO DE USUARIO
+         El usuario ya tiene el código
+         de su empresa y se registra.
+    ────────────────────────────────── -->
+    <div class="pagina" id="pg-reg-usuario">
+      <div class="pg-hdr">
+        <h2>Crear cuenta de usuario</h2>
+        <p>Necesitas el código de tu empresa para registrarte</p>
+      </div>
+      <div class="pg-hdr-line"></div>
+
+      <div class="pg-body">
+
+        <div class="alerta al-err" id="al-ru">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="al-ru-txt"></span>
+        </div>
+
+        <!-- Código de empresa (obligatorio) -->
+        <div class="gf">
+          <label for="ru-codigo">Código de empresa <span style="color:var(--red)">*</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <input type="text" id="ru-codigo" placeholder="Ej: EMP-A1B2C3"
+                   style="text-transform:uppercase;letter-spacing:1px"
+                   oninput="this.value=this.value.toUpperCase(); validarCodigoEmpresa()"/>
+          </div>
+          <!-- Indicador de empresa encontrada -->
+          <div id="emp-found" style="display:none;margin-top:6px"></div>
+        </div>
+
+        <!-- Nombre y Apellido -->
+        <div class="g2">
+          <div class="gf">
+            <label for="ru-nombre">Nombre</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="ru-nombre" placeholder="Nombre"/>
+            </div>
+          </div>
+          <div class="gf">
+            <label for="ru-apellido">Apellido</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="ru-apellido" placeholder="Apellido"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="gf">
+          <label for="ru-email">Correo electrónico</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input type="email" id="ru-email" placeholder="correo@tuempresa.com"/>
+          </div>
+        </div>
+
+        <!-- Cargo -->
+        <div class="gf">
+          <label for="ru-cargo">Cargo</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            </svg>
+            <select id="ru-cargo">
+              <option value="">-- Selecciona tu cargo --</option>
+              <option value="admin">Administrador</option>
+              <option value="supervisor">Supervisor de Seguridad</option>
+              <option value="vigilante">Vigilante</option>
+              <option value="operador">Operador de Sistema</option>
+              <option value="auxiliar">Auxiliar</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="gf">
+          <label for="ru-pass">Contraseña</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="ru-pass" placeholder="Mínimo 8 caracteres"
+                   oninput="fuerza(this.value,'ps-ru')"/>
+            <svg class="eye" onclick="toggleOjo('ru-pass',this)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="ps" id="ps-ru">
+            <div class="ps-barras">
+              <div class="ps-b" id="ps-ru-1"></div><div class="ps-b" id="ps-ru-2"></div>
+              <div class="ps-b" id="ps-ru-3"></div><div class="ps-b" id="ps-ru-4"></div>
+            </div>
+            <div class="ps-lbl" id="ps-ru-lbl"></div>
+          </div>
+        </div>
+
+        <!-- Confirmar contraseña -->
+        <div class="gf">
+          <label for="ru-pass2">Confirmar contraseña</label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="ru-pass2" placeholder="Repite tu contraseña"
+                   onkeydown="if(event.key==='Enter')registrarUsuario()"/>
+            <svg class="eye" onclick="toggleOjo('ru-pass2',this)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+
+        <button class="btn-main btn-violet" onclick="registrarUsuario()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          Crear Mi Cuenta
+        </button>
+
+      </div>
+      <div class="pg-pie" style="padding:0 28px 22px">
+        <a onclick="irA('pg-login')">← Volver al inicio de sesión</a>
+        &nbsp;·&nbsp;
+        ¿Sin código? <a onclick="irA('pg-reg-empresa')">Registra tu empresa</a>
+      </div>
+    </div>
+    <!-- FIN PG-REG-USUARIO -->
+
+
+    <!-- ──────────────────────────────
+         PÁGINA 3: REGISTRO DE EMPRESA
+         Flujo en 2 pasos:
+         Paso 1 → datos de la empresa
+         Paso 2 → código generado (tenant)
+    ────────────────────────────────── -->
+    <div class="pagina" id="pg-reg-empresa">
+      <div class="pg-hdr">
+        <h2>Registrar empresa</h2>
+        <p>Tu empresa tendrá su propio espacio privado e independiente</p>
+      </div>
+      <div class="pg-hdr-line"></div>
+
+      <div class="pg-body">
+
+        <!-- Pasos visuales -->
+        <div class="pasos" id="pasos-emp">
+          <div class="paso activo" id="paso-1">
+            <div class="paso-num">1</div>
+            <div class="paso-lbl">Datos empresa</div>
+          </div>
+          <div class="paso" id="paso-2">
+            <div class="paso-num">2</div>
+            <div class="paso-lbl">Admin cuenta</div>
+          </div>
+          <div class="paso" id="paso-3">
+            <div class="paso-num">3</div>
+            <div class="paso-lbl">Código listo</div>
+          </div>
+        </div>
+
+        <!-- PASO 1: Datos de la empresa -->
+        <div id="paso-emp-1">
+
+          <div class="alerta al-err" id="al-emp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="al-emp-txt"></span>
+          </div>
+
+          <!-- Nombre de empresa -->
+          <div class="gf">
+            <label for="emp-nombre">Nombre de la empresa</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <input type="text" id="emp-nombre" placeholder="Ej: SecureWatch SAC"/>
+            </div>
+          </div>
+
+          <!-- RUC y País -->
+          <div class="g2">
+            <div class="gf">
+              <label for="emp-ruc">RUC / NIT / RFC</label>
+              <div class="iw">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <input type="text" id="emp-ruc" placeholder="20123456789"/>
+              </div>
+            </div>
+            <div class="gf">
+              <label for="emp-pais">País</label>
+              <div class="iw">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <select id="emp-pais">
+                  <option value="PE">🇵🇪 Perú</option>
+                  <option value="MX">🇲🇽 México</option>
+                  <option value="CO">🇨🇴 Colombia</option>
+                  <option value="AR">🇦🇷 Argentina</option>
+                  <option value="CL">🇨🇱 Chile</option>
+                  <option value="EC">🇪🇨 Ecuador</option>
+                  <option value="BO">🇧🇴 Bolivia</option>
+                  <option value="UY">🇺🇾 Uruguay</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sector -->
+          <div class="gf">
+            <label for="emp-sector">Sector / Industria</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              </svg>
+              <select id="emp-sector">
+                <option value="">-- Selecciona el sector --</option>
+                <option value="educacion">Educación</option>
+                <option value="salud">Salud</option>
+                <option value="manufactura">Manufactura</option>
+                <option value="logistica">Logística y Transporte</option>
+                <option value="retail">Retail / Comercio</option>
+                <option value="gobierno">Gobierno / Público</option>
+                <option value="financiero">Financiero / Bancario</option>
+                <option value="tecnologia">Tecnología</option>
+                <option value="seguridad">Seguridad Privada</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Teléfono -->
+          <div class="gf">
+            <label for="emp-telefono">Teléfono de contacto</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.39 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <input type="tel" id="emp-telefono" placeholder="+51 999 000 000"/>
+            </div>
+          </div>
+
+          <button class="btn-main btn-cyan" onclick="siguientePasoEmpresa()">
+            Continuar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+        </div>
+        <!-- FIN PASO 1 -->
+
+        <!-- PASO 2: Datos del administrador principal -->
+        <div id="paso-emp-2" style="display:none">
+
+          <div class="alerta al-inf v" style="margin-bottom:16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Este será el administrador principal de la empresa</span>
+          </div>
+
+          <div class="g2">
+            <div class="gf">
+              <label for="adm-nombre">Nombre</label>
+              <div class="iw">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="adm-nombre" placeholder="Nombre"/>
+              </div>
+            </div>
+            <div class="gf">
+              <label for="adm-apellido">Apellido</label>
+              <div class="iw">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="adm-apellido" placeholder="Apellido"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="gf">
+            <label for="adm-email">Correo del administrador</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="adm-email" placeholder="admin@tuempresa.com"/>
+            </div>
+          </div>
+
+          <div class="gf">
+            <label for="adm-pass">Contraseña de administrador</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="adm-pass" placeholder="Mínimo 8 caracteres"
+                     oninput="fuerza(this.value,'ps-adm')"/>
+              <svg class="eye" onclick="toggleOjo('adm-pass',this)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div class="ps" id="ps-adm">
+              <div class="ps-barras">
+                <div class="ps-b" id="ps-adm-1"></div><div class="ps-b" id="ps-adm-2"></div>
+                <div class="ps-b" id="ps-adm-3"></div><div class="ps-b" id="ps-adm-4"></div>
+              </div>
+              <div class="ps-lbl" id="ps-adm-lbl"></div>
+            </div>
+          </div>
+
+          <div class="gf">
+            <label for="adm-pass2">Confirmar contraseña</label>
+            <div class="iw">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="adm-pass2" placeholder="Repite la contraseña"
+                     onkeydown="if(event.key==='Enter')registrarEmpresa()"/>
+              <svg class="eye" onclick="toggleOjo('adm-pass2',this)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+          </div>
+
+          <div class="g2">
+            <button class="btn-outline" onclick="volverPaso1()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Atrás
+            </button>
+            <button class="btn-main btn-green" onclick="registrarEmpresa()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Registrar
+            </button>
+          </div>
+
+        </div>
+        <!-- FIN PASO 2 -->
+
+        <!-- PASO 3: Código generado -->
+        <div id="paso-emp-3" style="display:none">
+
+          <div class="alerta al-ok v" style="margin-bottom:18px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <span>¡Empresa registrada exitosamente!</span>
+          </div>
+
+          <!-- Badge con datos de la empresa registrada -->
+          <div class="tenant-badge" id="tb-resultado">
+            <div class="tb-ico">🏢</div>
+            <div>
+              <div class="tb-nombre" id="tb-nombre-res">—</div>
+              <div class="tb-id"    id="tb-id-res">—</div>
+            </div>
+          </div>
+
+          <!-- Código del tenant generado -->
+          <div class="codigo-resultado">
+            <div class="cr-label">Tu código de empresa es</div>
+            <div class="cr-code" id="cr-codigo">—</div>
+            <div class="cr-aviso">
+              ⚠️ Guarda este código en un lugar seguro.<br/>
+              Todos los usuarios de tu empresa lo necesitarán para registrarse.
+            </div>
+          </div>
+
+          <button class="btn-main btn-cyan" onclick="copiarCodigo()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copiar Código
+          </button>
+
+          <div style="height:10px"></div>
+
+          <button class="btn-outline" onclick="irLoginConCodigo()">
+            Ir al inicio de sesión con este código
+          </button>
+
+        </div>
+        <!-- FIN PASO 3 -->
+
+      </div>
+
+      <div class="pg-pie" style="padding:0 28px 22px" id="pie-emp">
+        <a onclick="irA('pg-login')">← Volver al inicio de sesión</a>
+      </div>
+    </div>
+    <!-- FIN PG-REG-EMPRESA -->
+
+  </div>
+  <!-- FIN CARD -->
+
+  <div class="footer-global">
+    PulsarX Security CRM &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Multi-Tenant &nbsp;·&nbsp; Cada empresa tiene su propio espacio
+  </div>
+
+</div>
+<!-- FIN WRAP -->
+
+
+<script>
+
+/* ─────────────────────────────────────────
+   BASE DE DATOS EN MEMORIA
+   En producción: tablas MySQL multi-tenant.
+   - EMPRESAS: cada registro = un tenant separado
+   - USUARIOS: vinculados a su empresa por codigo_empresa
+───────────────────────────────────────── */
+let EMPRESAS  = [];  // Empresas registradas (cada una con su código único)
+let USUARIOS  = [];  // Usuarios registrados (vinculados a su empresa)
+
+// Usuario y empresa demo para pruebas
+EMPRESAS.push({
+  codigo:   'EMP-DEMO01',
+  nombre:   'TechPeru SAC',
+  ruc:      '20123456789',
+  pais:     'PE',
+  sector:   'tecnologia',
+  telefono: '+51 999 000 000',
+  creado:   new Date().toISOString(),
+});
+USUARIOS.push({
+  empresa_codigo: 'EMP-DEMO01',
+  nombre:   'Carlos',
+  apellido: 'Ludeña',
+  email:    'carlos@techperu.com',
+  password: 'Admin2024!',
+  cargo:    'admin',
+});
+
+/* Variable temporal para pasar datos entre pasos del registro de empresa */
+let datosEmpresaTmp = {};
+
+/* ─────────────────────────────────────────
+   NAVEGACIÓN ENTRE PÁGINAS
+───────────────────────────────────────── */
+function irA(pgId) {
+  // Oculta todas las páginas
+  document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
+  // Muestra la solicitada
+  document.getElementById(pgId).classList.add('activa');
+  // Limpia alertas
+  document.querySelectorAll('.alerta').forEach(a => a.classList.remove('v'));
+}
+
+/* ─────────────────────────────────────────
+   LOGIN
+───────────────────────────────────────── */
+function iniciarSesion() {
+  limpiarAlerta('al-login');
+  const codigo = document.getElementById('l-codigo').value.trim().toUpperCase();
+  const email  = document.getElementById('l-email').value.trim().toLowerCase();
+  const pass   = document.getElementById('l-pass').value;
+
+  // Validaciones básicas
+  if (!codigo) { alerta('al-login','Ingresa el código de tu empresa'); return; }
+  if (!email)  { alerta('al-login','Ingresa tu correo electrónico');   return; }
+  if (!pass)   { alerta('al-login','Ingresa tu contraseña');           return; }
+
+  // Verifica que la empresa exista con ese código
+  const empresa = EMPRESAS.find(e => e.codigo === codigo);
+  if (!empresa) {
+    alerta('al-login','Código de empresa no encontrado. Verifica que sea correcto.');
+    return;
+  }
+
+  // Verifica credenciales del usuario dentro de esa empresa
+  const usuario = USUARIOS.find(u =>
+    u.empresa_codigo === codigo &&
+    u.email.toLowerCase() === email &&
+    u.password === pass
+  );
+  if (!usuario) {
+    alerta('al-login','Correo o contraseña incorrectos.');
+    return;
+  }
+
+  // Éxito: guarda sesión
+  sessionStorage.setItem('pulsarx_sesion', JSON.stringify({
+    nombre:   usuario.nombre,
+    apellido: usuario.apellido,
+    email:    usuario.email,
+    cargo:    usuario.cargo,
+    empresa:  empresa.nombre,
+    codigo:   empresa.codigo,
+    tenant:   empresa.codigo,
+  }));
+
+  // Animación de éxito
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg> Acceso concedido...`;
+  btn.className = 'btn-main btn-green';
+  btn.disabled  = true;
+
+  setTimeout(() => {
+    // Redirige al CRM — ambos archivos deben estar en la misma carpeta
+    window.location.href = 'index.html';
+  }, 1000);
+}
+
+function olvideClave() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { alerta('al-login','Ingresa primero tu correo para recuperar la contraseña'); return; }
+  const el = document.getElementById('al-login');
+  el.className = 'alerta al-inf v';
+  document.getElementById('al-login-txt').textContent =
+    `📧 Se enviará un enlace de recuperación a ${email} (disponible al conectar MySQL)`;
+}
+
+/* ─────────────────────────────────────────
+   REGISTRO DE USUARIO (con código de empresa)
+───────────────────────────────────────── */
+function validarCodigoEmpresa() {
+  const codigo = document.getElementById('ru-codigo').value.trim().toUpperCase();
+  const found  = document.getElementById('emp-found');
+  if (codigo.length < 6) { found.style.display='none'; return; }
+
+  const emp = EMPRESAS.find(e => e.codigo === codigo);
+  if (emp) {
+    found.style.display = 'block';
+    found.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;
+                  background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.2);
+                  border-radius:8px;font-size:12px">
+        <svg style="width:14px;height:14px;color:var(--grn);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span style="color:var(--grn)">Empresa encontrada: <strong>${emp.nombre}</strong></span>
+      </div>`;
+  } else {
+    found.style.display = 'block';
+    found.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;
+                  background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);
+                  border-radius:8px;font-size:12px">
+        <svg style="width:14px;height:14px;color:var(--red);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span style="color:var(--red)">Código no encontrado. Verifica con el administrador de tu empresa.</span>
+      </div>`;
+  }
+}
+
+function registrarUsuario() {
+  limpiarAlerta('al-ru');
+  const codigo   = document.getElementById('ru-codigo').value.trim().toUpperCase();
+  const nombre   = document.getElementById('ru-nombre').value.trim();
+  const apellido = document.getElementById('ru-apellido').value.trim();
+  const email    = document.getElementById('ru-email').value.trim().toLowerCase();
+  const cargo    = document.getElementById('ru-cargo').value;
+  const pass     = document.getElementById('ru-pass').value;
+  const pass2    = document.getElementById('ru-pass2').value;
+
+  // Validaciones
+  if (!codigo)             { alerta('al-ru','Ingresa el código de tu empresa');                 return; }
+  if (!EMPRESAS.find(e=>e.codigo===codigo)) { alerta('al-ru','Código de empresa inválido');    return; }
+  if (!nombre)             { alerta('al-ru','Ingresa tu nombre');                               return; }
+  if (!apellido)           { alerta('al-ru','Ingresa tu apellido');                             return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alerta('al-ru','Correo inválido'); return; }
+  if (!cargo)              { alerta('al-ru','Selecciona tu cargo');                             return; }
+  if (pass.length < 8)     { alerta('al-ru','La contraseña debe tener al menos 8 caracteres'); return; }
+  if (pass !== pass2)      { alerta('al-ru','Las contraseñas no coinciden');                    return; }
+
+  // Verifica que el email no esté ya registrado en esa empresa
+  if (USUARIOS.find(u => u.empresa_codigo === codigo && u.email.toLowerCase() === email)) {
+    alerta('al-ru','Este correo ya está registrado en esa empresa'); return;
+  }
+
+  // Registra el usuario
+  USUARIOS.push({ empresa_codigo:codigo, nombre, apellido, email, password:pass, cargo });
+
+  // Pre-rellena el login y redirige con mensaje de éxito
+  document.getElementById('l-codigo').value = codigo;
+  document.getElementById('l-email').value  = email;
+  irA('pg-login');
+
+  // Muestra alerta de éxito en el login
+  const al = document.getElementById('al-login');
+  al.className = 'alerta al-ok v';
+  document.getElementById('al-login-txt').textContent =
+    `✅ Cuenta creada para ${nombre}. Ingresa tu contraseña para acceder.`;
+}
+
+/* ─────────────────────────────────────────
+   REGISTRO DE EMPRESA — PASO 1
+───────────────────────────────────────── */
+function siguientePasoEmpresa() {
+  limpiarAlerta('al-emp');
+
+  const nombre   = document.getElementById('emp-nombre').value.trim();
+  const ruc      = document.getElementById('emp-ruc').value.trim();
+  const sector   = document.getElementById('emp-sector').value;
+  const telefono = document.getElementById('emp-telefono').value.trim();
+
+  if (!nombre)   { alerta('al-emp','Ingresa el nombre de la empresa'); return; }
+  if (!ruc)      { alerta('al-emp','Ingresa el RUC / NIT de la empresa'); return; }
+  if (!sector)   { alerta('al-emp','Selecciona el sector de la empresa'); return; }
+  if (!telefono) { alerta('al-emp','Ingresa un teléfono de contacto'); return; }
+
+  // Guarda temporalmente los datos de la empresa
+  datosEmpresaTmp = {
+    nombre,
+    ruc,
+    pais:     document.getElementById('emp-pais').value,
+    sector,
+    telefono,
+  };
+
+  // Avanza al paso 2
+  document.getElementById('paso-emp-1').style.display = 'none';
+  document.getElementById('paso-emp-2').style.display = 'block';
+  actualizarPasos(2);
+}
+
+function volverPaso1() {
+  document.getElementById('paso-emp-2').style.display = 'none';
+  document.getElementById('paso-emp-1').style.display = 'block';
+  actualizarPasos(1);
+}
+
+/* ─────────────────────────────────────────
+   REGISTRO DE EMPRESA — PASO 2 (admin)
+───────────────────────────────────────── */
+function registrarEmpresa() {
+  const nombre   = document.getElementById('adm-nombre').value.trim();
+  const apellido = document.getElementById('adm-apellido').value.trim();
+  const email    = document.getElementById('adm-email').value.trim().toLowerCase();
+  const pass     = document.getElementById('adm-pass').value;
+  const pass2    = document.getElementById('adm-pass2').value;
+
+  if (!nombre)         { alerta('al-emp','Ingresa el nombre del administrador'); return; }
+  if (!apellido)       { alerta('al-emp','Ingresa el apellido del administrador'); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alerta('al-emp','Correo inválido'); return; }
+  if (pass.length < 8) { alerta('al-emp','La contraseña debe tener mínimo 8 caracteres'); return; }
+  if (pass !== pass2)  { alerta('al-emp','Las contraseñas no coinciden'); return; }
+
+  // Genera un código único para el tenant (empresa)
+  // En producción: lo genera el servidor MySQL y lo almacena en la tabla de tenants
+  const codigo = 'EMP-' + Math.random().toString(36).substr(2,6).toUpperCase();
+
+  // Registra la empresa en el "tenant store"
+  EMPRESAS.push({
+    ...datosEmpresaTmp,
+    codigo,
+    creado: new Date().toISOString(),
+  });
+
+  // Registra al administrador como el primer usuario de esa empresa
+  USUARIOS.push({
+    empresa_codigo: codigo,
+    nombre, apellido, email,
+    password: pass,
+    cargo: 'admin',
+  });
+
+  // Muestra el resultado en el Paso 3
+  document.getElementById('cr-codigo').textContent   = codigo;
+  document.getElementById('tb-nombre-res').textContent = datosEmpresaTmp.nombre;
+  document.getElementById('tb-id-res').textContent    = `Admin: ${nombre} ${apellido} · ${email}`;
+
+  document.getElementById('paso-emp-2').style.display = 'none';
+  document.getElementById('paso-emp-3').style.display = 'block';
+  document.getElementById('pie-emp').style.display    = 'none';
+  actualizarPasos(3);
+}
+
+/* Indica qué paso está activo en el indicador visual */
+function actualizarPasos(activo) {
+  [1,2,3].forEach(n => {
+    const el = document.getElementById(`paso-${n}`);
+    el.classList.remove('activo','done');
+    if (n < activo) el.classList.add('done');
+    if (n === activo) el.classList.add('activo');
+  });
+}
+
+/* Copia el código al portapapeles */
+function copiarCodigo() {
+  const codigo = document.getElementById('cr-codigo').textContent;
+  navigator.clipboard.writeText(codigo).then(() => {
+    const btn = document.querySelector('#paso-emp-3 .btn-main');
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> ¡Copiado!`;
+    setTimeout(() => btn.innerHTML = orig, 1800);
+  });
+}
+
+/* Pre-rellena el login con el código y redirige */
+function irLoginConCodigo() {
+  const codigo = document.getElementById('cr-codigo').textContent;
+  const email  = document.getElementById('adm-email').value.trim();
+  document.getElementById('l-codigo').value = codigo;
+  document.getElementById('l-email').value  = email;
+
+  // Reinicia el form de empresa para una nueva inscripción futura
+  document.getElementById('paso-emp-3').style.display = 'none';
+  document.getElementById('paso-emp-1').style.display = 'block';
+  document.getElementById('pie-emp').style.display    = '';
+  actualizarPasos(1);
+  datosEmpresaTmp = {};
+
+  irA('pg-login');
+
+  const al = document.getElementById('al-login');
+  al.className = 'alerta al-ok v';
+  document.getElementById('al-login-txt').textContent =
+    `✅ Empresa registrada. Ingresa tu contraseña para acceder al sistema.`;
+}
+
+/* ─────────────────────────────────────────
+   VALIDADOR DE CÓDIGO EN EL LOGIN
+   (al salir del campo código, muestra la empresa)
+───────────────────────────────────────── */
+document.getElementById('l-codigo').addEventListener('blur', function() {
+  const codigo = this.value.trim().toUpperCase();
+  const emp = EMPRESAS.find(e => e.codigo === codigo);
+  if (emp && codigo) {
+    limpiarAlerta('al-login');
+    const al = document.getElementById('al-login');
+    al.className = 'alerta al-inf v';
+    document.getElementById('al-login-txt').textContent = `🏢 ${emp.nombre}`;
+  }
+});
+
+/* ─────────────────────────────────────────
+   INDICADOR DE FORTALEZA DE CONTRASEÑA
+───────────────────────────────────────── */
+function fuerza(val, prefijo) {
+  const wrap = document.getElementById(prefijo);
+  if (!val) { wrap.classList.remove('v'); return; }
+  wrap.classList.add('v');
+
+  let s = 0;
+  if (val.length >= 8)          s++;
+  if (/[A-Z]/.test(val))        s++;
+  if (/[0-9]/.test(val))        s++;
+  if (/[^A-Za-z0-9]/.test(val)) s++;
+
+  const cols  = ['#ff4d6d','#fbbf24','#00d68f','#00e5ff'];
+  const textos= ['Muy débil','Regular','Buena','Excelente'];
+
+  [1,2,3,4].forEach(i => {
+    const b = document.getElementById(`${prefijo}-${i}`);
+    if (b) b.style.background = i <= s ? cols[s-1] : 'var(--borde)';
+  });
+
+  const lbl = document.getElementById(`${prefijo}-lbl`);
+  if (lbl) { lbl.textContent = textos[s-1] || 'Muy débil'; lbl.style.color = cols[s-1] || '#ff4d6d'; }
+}
+
+/* ─────────────────────────────────────────
+   TOGGLE VISIBILIDAD DE CONTRASEÑA
+───────────────────────────────────────── */
+function toggleOjo(id, el) {
+  const inp  = document.getElementById(id);
+  const esTexto = inp.type === 'text';
+  inp.type = esTexto ? 'password' : 'text';
+  el.innerHTML = esTexto
+    ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`
+    : `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+  el.style.opacity = esTexto ? '.38' : '.7';
+}
+
+/* ─────────────────────────────────────────
+   ALERTAS
+───────────────────────────────────────── */
+function alerta(id, msg) {
+  const el = document.getElementById(id);
+  el.className = 'alerta al-err v';
+  const span = el.querySelector('span');
+  if (span) span.textContent = msg;
+}
+function limpiarAlerta(id) {
+  document.getElementById(id)?.classList.remove('v');
+}
+
+/* Escape cierra el modal si alguno estuviera abierto */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('pg-login').classList.contains('activa')) {
+    iniciarSesion();
+  }
+});
+
+</script>
+</body>
+</html>

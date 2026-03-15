@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <!-- Chart.js: librería de gráficas JavaScript desde CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- SheetJS: genera archivos .xlsx directamente en el navegador sin servidor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════════════
    VARIABLES CSS — tokens de diseño globales
@@ -404,7 +406,32 @@ tbody td { padding:11px 14px; vertical-align:middle; color:var(--txt); }
 .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .modal-pie { display:flex; justify-content:flex-end; gap:10px; padding:12px 20px; border-top:1px solid var(--borde); }
 
-/* ── TOAST ── */
+/* ── BOTONES DE DESCARGA ── */
+/* Botón .xlsx — verde esmeralda */
+.btn-descarga {
+  background: transparent;
+  color: #00d68f;
+  border: 1px solid #00d68f;
+  box-shadow: 0 0 10px rgba(0,214,143,.12);
+}
+.btn-descarga:hover {
+  background: rgba(0,214,143,.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,214,143,.2);
+}
+
+/* Botón Word — azul marino con acento violeta */
+.btn-descarga-word {
+  background: linear-gradient(135deg, #1e40af, #4f46e5);
+  color: white;
+  border: none;
+  box-shadow: 0 0 14px rgba(79,70,229,.25);
+}
+.btn-descarga-word:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(79,70,229,.35);
+}
 #toast { position:fixed; bottom:20px; right:20px; background:var(--ac); color:#03060e; padding:10px 18px; border-radius:10px; font-size:12.5px; font-weight:700; z-index:999; transform:translateY(80px); opacity:0; transition:all .32s cubic-bezier(.34,1.56,.64,1); box-shadow:0 4px 20px var(--ac-g); display:flex; align-items:center; gap:8px; }
 #toast.visible { transform:translateY(0); opacity:1; }
 #toast svg { width:14px; height:14px; flex-shrink:0; }
@@ -541,10 +568,20 @@ tbody td { padding:11px 14px; vertical-align:middle; color:var(--txt); }
 
   <div class="sidebar-usuario">
     <div class="avatar">CL</div>
-    <div>
+    <div style="flex:1;min-width:0">
       <div class="usuario-nombre">Carlos Ludeña</div>
       <div class="usuario-rol">Administrador</div>
     </div>
+    <!-- Botón cerrar sesión -->
+    <button onclick="cerrarSesion()" title="Cerrar sesión"
+      style="background:none;border:none;cursor:pointer;opacity:.45;transition:opacity .2s;padding:4px;flex-shrink:0"
+      onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='.45'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
   </div>
 </aside>
 
@@ -581,6 +618,18 @@ tbody td { padding:11px 14px; vertical-align:middle; color:var(--txt); }
 
     <!-- ══════════════════ VISTA: DASHBOARD ══════════════════ -->
     <div id="vista-dashboard">
+
+      <!-- Encabezado del Dashboard con botón de reporte ejecutivo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--txt)">Panel de Control</div>
+          <div style="font-size:11px;color:var(--txt2);font-family:var(--fm);margin-top:2px">Resumen general del sistema PulsarX Security CRM</div>
+        </div>
+        <button class="btn btn-descarga-word" onclick="descargarReporteWord()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="12 15 10 20 8 15"/><polyline points="16 15 14 20 12 15"/></svg>
+          Descargar Reporte Ejecutivo
+        </button>
+      </div>
 
       <!-- KPIs -->
       <div class="kpi-grid">
@@ -732,10 +781,16 @@ tbody td { padding:11px 14px; vertical-align:middle; color:var(--txt); }
       <div class="tarjeta">
         <div class="tarjeta-header">
           <div><h3 id="crud-titulo"></h3><p id="crud-sub"></p></div>
-          <button class="btn btn-primario" onclick="abrirModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nuevo Registro
-          </button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-descarga" onclick="descargarXLSX()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Descargar Reporte
+            </button>
+            <button class="btn btn-primario" onclick="abrirModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo Registro
+            </button>
+          </div>
         </div>
         <div class="barra-tools">
           <div class="bsq">
@@ -1216,6 +1271,392 @@ function toggleModo() {
 ───────────────────────────────────────── */
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('abierto'); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarModal(); });
+
+/* ─────────────────────────────────────────
+   DESCARGAR REPORTE .XLSX DEL MÓDULO ACTIVO
+   Usa SheetJS (XLSX) cargado desde CDN.
+   Genera una tabla formateada con encabezados
+   de color y todos los registros del módulo.
+───────────────────────────────────────── */
+function descargarXLSX() {
+  if (moduloActual === null) return;
+  const m    = MODULOS[moduloActual];
+  const filas = datos[moduloActual];
+
+  // Si no hay registros genera igual el archivo con solo encabezados
+  const encabezados = m.cols; // columnas definidas en el módulo
+
+  // Construye el array de datos: primera fila = encabezados
+  const wsData = [encabezados];
+
+  // Agrega cada registro como fila (extrae valores planos sin HTML de chips)
+  filas.forEach(r => {
+    // m.fila(r) devuelve celdas que pueden tener HTML de chips → las limpiamos
+    const celdas = m.campos.map(c => r[c.id] || '');
+    wsData.push(celdas);
+  });
+
+  // Crea la hoja de cálculo desde el array
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // ── Estilos de ancho de columna automático ──
+  const maxLen = encabezados.map((h, i) => {
+    const maxData = filas.reduce((mx, r) => {
+      const val = String(m.campos[i] ? (r[m.campos[i].id] || '') : '');
+      return Math.max(mx, val.length);
+    }, h.length);
+    return { wch: Math.min(Math.max(maxData + 2, 12), 40) };
+  });
+  ws['!cols'] = maxLen;
+
+  // ── Fila de título del reporte encima de los encabezados ──
+  XLSX.utils.sheet_add_aoa(ws, [[`REPORTE — ${m.nombre.toUpperCase()}`]], { origin: 'A1' });
+  XLSX.utils.sheet_add_aoa(ws, [[`Generado: ${new Date().toLocaleString('es-PE')} | PulsarX Security CRM`]], { origin: 'A2' });
+  XLSX.utils.sheet_add_aoa(ws, [['']], { origin: 'A3' }); // fila vacía separadora
+  XLSX.utils.sheet_add_aoa(ws, [encabezados], { origin: 'A4' }); // encabezados en fila 4
+
+  // Agrega los datos desde la fila 5
+  filas.forEach((r, i) => {
+    const celdas = m.campos.map(c => r[c.id] || '');
+    XLSX.utils.sheet_add_aoa(ws, [celdas], { origin: `A${5 + i}` });
+  });
+
+  // Crea el libro de trabajo con una hoja
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, m.nombre.substring(0, 31)); // max 31 chars en nombre de hoja
+
+  // Agrega hoja de resumen con metadatos
+  const wsResumen = XLSX.utils.aoa_to_sheet([
+    ['RESUMEN DEL REPORTE'],
+    [''],
+    ['Módulo',        m.nombre],
+    ['Descripción',  m.desc],
+    ['Total registros', filas.length],
+    ['Generado por', 'Carlos Ludeña'],
+    ['Sistema',      'PulsarX Security CRM'],
+    ['Fecha',        new Date().toLocaleDateString('es-PE')],
+    ['Hora',         new Date().toLocaleTimeString('es-PE')],
+  ]);
+  wsResumen['!cols'] = [{ wch: 20 }, { wch: 50 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // Descarga el archivo
+  const nombreArchivo = `PulsarX_${m.nombre.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, nombreArchivo);
+
+  mostrarToast(`Reporte descargado: ${nombreArchivo}`, 'var(--grn)', '#03060e');
+}
+
+
+/* ─────────────────────────────────────────
+   DESCARGAR REPORTE EJECUTIVO — WORD (.doc)
+   Captura los canvas de Chart.js como imágenes
+   base64 con canvas.toDataURL() e las incrusta
+   directamente en el HTML del documento Word.
+   Sin librerías externas — 100% nativo.
+───────────────────────────────────────── */
+function descargarReporteWord() {
+  const fecha    = new Date().toLocaleDateString('es-PE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const horaGen  = new Date().toLocaleTimeString('es-PE');
+  const totalReg = totalRegistros();
+
+  // ── Captura cada canvas de Chart.js como imagen base64 ──
+  // canvas.toDataURL('image/png') devuelve un string "data:image/png;base64,..."
+  // que se puede usar directamente como src de un <img> en HTML.
+  // Si el canvas no existe aún (dashboard nunca renderizado) usa una imagen vacía.
+  function capturarGrafico(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return '';                        // si no existe, devuelve vacío
+    try {
+      return canvas.toDataURL('image/png');        // captura el gráfico como PNG en base64
+    } catch(e) {
+      return '';                                   // en caso de error de CORS, devuelve vacío
+    }
+  }
+
+  // Captura los 5 gráficos del dashboard
+  const imgBarras  = capturarGrafico('chart-barras');   // actividad por módulo
+  const imgPastel1 = capturarGrafico('chart-pastel1');  // distribución de accesos
+  const imgPastel2 = capturarGrafico('chart-pastel2');  // incidentes por severidad
+  const imgPastel3 = capturarGrafico('chart-pastel3');  // extintores por estado
+  const imgPolar   = capturarGrafico('chart-polar');    // rondas por turno
+
+  // Helper: genera el HTML de una imagen si existe, o un aviso si no
+  function imgTag(src, alt, ancho='100%') {
+    if (!src) return `<p style="color:#94a3b8;font-size:12px;font-style:italic;text-align:center;padding:20px;border:1px dashed #e2e8f0">
+      Gráfico no disponible — abra el Dashboard primero y vuelva a descargar.
+    </p>`;
+    return `<img src="${src}" alt="${alt}" style="width:${ancho};max-width:100%;border-radius:8px;border:1px solid #e2e8f0;display:block;margin:8px auto"/>`;
+  }
+
+  // ── KPIs para la tabla ──
+  const kpis = [
+    ['Módulos Activos',       '22'],
+    ['Total Registros',       String(totalReg)],
+    ['Incidentes Abiertos',   String((datos[9]||[]).filter(r=>r.estado==='Abierto').length)],
+    ['Accesos del Sistema',   String((datos[0]||[]).length + (datos[1]||[]).length)],
+    ['Rondas Registradas',    String((datos[8]||[]).length)],
+    ['Extintores Operativos', String((datos[12]||[]).filter(r=>r.estado==='Operativo').length)],
+  ];
+
+  // ── Filas de la tabla de módulos ──
+  const filasModulos = MODULOS.map((m,i) => `
+    <tr>
+      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px">${i+1}</td>
+      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px;font-weight:600">${m.nombre}</td>
+      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:12px;color:#64748b">${m.desc}</td>
+      <td style="padding:7px 12px;border:1px solid #d1d5db;font-size:13px;text-align:center;font-weight:700;color:#0e7490">${datos[i].length}</td>
+    </tr>`).join('');
+
+  // ── Filas de KPIs ──
+  const filasKPIs = kpis.map(([k,v]) => `
+    <tr>
+      <td style="padding:7px 14px;border:1px solid #d1d5db;font-size:13px;font-weight:600">${k}</td>
+      <td style="padding:7px 14px;border:1px solid #d1d5db;font-size:15px;font-weight:700;color:#0e7490;text-align:center">${v}</td>
+    </tr>`).join('');
+
+  // ── Hallazgos ──
+  const modulosConDatos = MODULOS
+    .map((m,i) => ({ nombre:m.nombre, desc:m.desc, total:datos[i].length }))
+    .filter(m => m.total > 0)
+    .sort((a,b) => b.total - a.total);
+
+  const hallazgosHTML = modulosConDatos.length > 0
+    ? modulosConDatos.map(m => `
+        <p style="margin:6px 0;font-size:13px">
+          <span style="color:#0e7490;font-weight:700">&#9679; ${m.nombre}:</span>
+          &nbsp;${m.total} registro${m.total!==1?'s':''} — ${m.desc}
+        </p>`).join('')
+    : `<p style="color:#94a3b8;font-size:13px;font-style:italic">
+        No se han registrado datos en ningún módulo aún.
+       </p>`;
+
+  // ── HTML completo del documento con gráficos embebidos ──
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:w="urn:schemas-microsoft-com:office:word"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="UTF-8"/>
+      <!--[if gte mso 9]>
+      <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom></w:WordDocument></xml>
+      <![endif]-->
+      <style>
+        @page  { size:A4; margin:2cm 2.5cm; }
+        body   { font-family:Calibri,Arial,sans-serif; font-size:13px; color:#1e293b; }
+        table  { border-collapse:collapse; width:100%; margin:12px 0; }
+        th     { background:#0e1a2e; color:#fff; padding:8px 12px; font-size:13px; text-align:left; }
+        td     { font-size:13px; }
+        .sec   { font-size:18px; font-weight:700; color:#0e7490;
+                 border-bottom:2px solid #00e5ff; padding-bottom:5px;
+                 margin-top:32px; margin-bottom:12px; }
+        .sub   { font-size:13px; color:#64748b; margin-bottom:10px; }
+        .grafico-titulo { font-size:13px; font-weight:700; color:#1e293b; margin:18px 0 4px; }
+        .grafico-sub    { font-size:11px; color:#94a3b8; margin-bottom:8px; }
+        .grafico-wrap   { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;
+                          padding:14px; margin-bottom:20px; }
+        .grid-2         { display:table; width:100%; }
+        .col-2          { display:table-cell; width:49%; vertical-align:top; padding:0 6px; }
+        .portada-titulo { font-size:32px; font-weight:900; color:#0e7490;
+                          letter-spacing:2px; text-align:center; margin-top:60px; }
+        .portada-sub    { font-size:18px; color:#8b5cf6; text-align:center;
+                          margin-top:8px; letter-spacing:1px; }
+        .portada-linea  { border:none; border-top:3px solid #00e5ff; margin:30px 0; }
+        .portada-meta   { text-align:center; font-size:14px; color:#334155; line-height:2.2; }
+        .conf           { text-align:center; font-size:13px; font-weight:700; color:#ff4d6d;
+                          border:2px solid #ff4d6d; padding:6px 20px;
+                          display:inline-block; margin-top:20px; letter-spacing:2px; }
+        .pie            { text-align:center; font-size:11px; color:#94a3b8;
+                          border-top:1px solid #e2e8f0; padding-top:10px; margin-top:40px; }
+        .page-break     { page-break-after:always; }
+      </style>
+    </head>
+    <body>
+
+      <!-- ═══════════ PORTADA ═══════════ -->
+      <div class="portada-titulo">PULSARX SECURITY CRM</div>
+      <div class="portada-sub">REPORTE EJECUTIVO DEL SISTEMA</div>
+      <hr class="portada-linea"/>
+      <div class="portada-meta">
+        <b>Preparado por:</b> Carlos Ludeña<br/>
+        <b>Cargo:</b> Administrador del Sistema<br/>
+        <b>Fecha:</b> ${fecha}<br/>
+        <b>Hora de generación:</b> ${horaGen}
+      </div>
+      <div style="text-align:center;margin-top:24px">
+        <span class="conf">&#128274; CONFIDENCIAL — USO INTERNO</span>
+      </div>
+
+      <div class="page-break"></div>
+
+      <!-- ═══════════ SECCIÓN 1: RESUMEN EJECUTIVO ═══════════ -->
+      <div class="sec">1. Resumen Ejecutivo</div>
+      <p style="font-size:13px;line-height:1.8;color:#334155">
+        El presente informe corresponde al estado operativo del sistema <strong>PulsarX Security CRM</strong>,
+        generado automáticamente el <strong>${fecha}</strong>. El sistema cuenta con
+        <strong>22 módulos activos</strong> que cubren todas las áreas críticas de seguridad institucional.
+        Al momento de la generación, el sistema registra un total de
+        <strong style="color:#0e7490">${totalReg} registros</strong>.
+      </p>
+
+      <!-- ═══════════ SECCIÓN 2: INDICADORES KPI ═══════════ -->
+      <div class="sec">2. Indicadores Clave de Desempeño (KPIs)</div>
+      <p class="sub">Estado actual del sistema al momento de la generación del reporte:</p>
+      <table>
+        <thead><tr>
+          <th style="width:70%">Indicador</th>
+          <th style="width:30%;text-align:center">Valor</th>
+        </tr></thead>
+        <tbody>${filasKPIs}</tbody>
+      </table>
+
+      <!-- ═══════════ SECCIÓN 3: GRÁFICOS ═══════════ -->
+      <div class="sec">3. Análisis Gráfico del Sistema</div>
+      <p class="sub">Visualizaciones generadas automáticamente desde el Dashboard del sistema.</p>
+
+      <!-- Gráfico 1: Actividad por módulo (barras) — ancho completo -->
+      <div class="grafico-wrap">
+        <div class="grafico-titulo">&#9642; Actividad por Módulo — Registros Totales</div>
+        <div class="grafico-sub">Comparación del volumen de registros en los 22 módulos del sistema</div>
+        ${imgTag(imgBarras, 'Actividad por módulo', '100%')}
+      </div>
+
+      <!-- Gráficos 2 y 3: Distribución accesos + Incidentes (lado a lado) -->
+      <div class="grid-2">
+        <div class="col-2">
+          <div class="grafico-wrap">
+            <div class="grafico-titulo">&#9642; Distribución de Accesos</div>
+            <div class="grafico-sub">Tipos de ingreso registrados</div>
+            ${imgTag(imgPastel1, 'Distribución de accesos', '95%')}
+          </div>
+        </div>
+        <div class="col-2">
+          <div class="grafico-wrap">
+            <div class="grafico-titulo">&#9642; Estado de Incidentes</div>
+            <div class="grafico-sub">Distribución por severidad</div>
+            ${imgTag(imgPastel2, 'Estado de incidentes', '95%')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos 4 y 5: Extintores + Rondas (lado a lado) -->
+      <div class="grid-2">
+        <div class="col-2">
+          <div class="grafico-wrap">
+            <div class="grafico-titulo">&#9642; Estado de Extintores</div>
+            <div class="grafico-sub">Control de vigencia operativa</div>
+            ${imgTag(imgPastel3, 'Estado de extintores', '95%')}
+          </div>
+        </div>
+        <div class="col-2">
+          <div class="grafico-wrap">
+            <div class="grafico-titulo">&#9642; Rondas por Turno</div>
+            <div class="grafico-sub">Distribución semanal de vigilancia</div>
+            ${imgTag(imgPolar, 'Rondas por turno', '95%')}
+          </div>
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+
+      <!-- ═══════════ SECCIÓN 4: ACTIVIDAD POR MÓDULO ═══════════ -->
+      <div class="sec">4. Actividad Detallada por Módulo</div>
+      <p class="sub">Los 22 módulos del sistema con su respectivo conteo de registros:</p>
+      <table>
+        <thead><tr>
+          <th style="width:5%">#</th>
+          <th style="width:28%">Módulo</th>
+          <th style="width:54%">Descripción</th>
+          <th style="width:13%;text-align:center">Registros</th>
+        </tr></thead>
+        <tbody>${filasModulos}</tbody>
+      </table>
+
+      <!-- ═══════════ SECCIÓN 5: HALLAZGOS ═══════════ -->
+      <div class="sec">5. Hallazgos — Módulos con Actividad</div>
+      <p class="sub">Módulos que presentan registros activos, ordenados de mayor a menor actividad:</p>
+      ${hallazgosHTML}
+
+      <!-- ═══════════ SECCIÓN 6: RECOMENDACIONES ═══════════ -->
+      <div class="sec">6. Recomendaciones</div>
+      <p style="font-size:13px;line-height:2.2;color:#334155">
+        &#9679; Mantener el registro diario en todos los módulos de acceso para garantizar la trazabilidad completa.<br/>
+        &#9679; Revisar periódicamente el módulo de Incidentes para dar seguimiento oportuno a los casos abiertos.<br/>
+        &#9679; Actualizar el estado de extintores antes de su fecha de vencimiento.<br/>
+        &#9679; Realizar simulacros y registrarlos en Gestión de Sismos al menos una vez por trimestre.<br/>
+        &#9679; Conectar el sistema a una base de datos MySQL para persistencia permanente de los datos.<br/>
+        &#9679; Capacitar al personal de seguridad en el uso correcto de cada módulo del sistema.
+      </p>
+
+      <!-- ═══════════ PIE DEL DOCUMENTO ═══════════ -->
+      <div class="pie">
+        PulsarX Security CRM &nbsp;|&nbsp; Reporte generado automáticamente
+        &nbsp;|&nbsp; Confidencial &nbsp;|&nbsp; ${fecha}
+      </div>
+
+    </body>
+    </html>`;
+
+  // ── Empaqueta el HTML como blob con MIME type de Word y descarga ──
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `PulsarX_Reporte_Ejecutivo_${new Date().toISOString().slice(0,10)}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  mostrarToast('Reporte Ejecutivo con gráficos descargado ✓', '#4f46e5', '#fff');
+}
+
+
+/* ─────────────────────────────────────────
+   SESIÓN — Lee los datos del usuario logueado
+   guardados por el login en sessionStorage.
+   Si no hay sesión activa, redirige al login.
+───────────────────────────────────────── */
+(function verificarSesion() {
+  const sesionRaw = sessionStorage.getItem('pulsarx_sesion');
+
+  // Si no hay sesión, redirige al login
+  if (!sesionRaw) {
+    // Permite acceso directo al CRM en desarrollo (sin login)
+    // En producción descomenta la siguiente línea:
+    // window.location.href = 'login.html';
+    return;
+  }
+
+  const s = JSON.parse(sesionRaw);
+
+  // Actualiza el nombre del usuario en el sidebar
+  const elNombre = document.querySelector('.usuario-nombre');
+  const elRol    = document.querySelector('.usuario-rol');
+  if (elNombre) elNombre.textContent = `${s.nombre} ${s.apellido}`;
+  if (elRol)    elRol.textContent    = s.cargo || 'Usuario';
+
+  // Actualiza las iniciales del avatar (sidebar + header)
+  const iniciales = (s.nombre[0] + (s.apellido?.[0] || '')).toUpperCase();
+  document.querySelectorAll('.avatar').forEach(av => av.textContent = iniciales);
+
+  // Actualiza el nombre de bienvenida en la página de módulos
+  const elBienvenida = document.getElementById('nombre-usuario');
+  if (elBienvenida) elBienvenida.textContent = `${s.nombre} ${s.apellido}`;
+
+  // Muestra el nombre de la empresa en el pie del sidebar
+  const elEmpresa = document.querySelector('.usuario-rol');
+  if (elEmpresa) elEmpresa.textContent = s.empresa || s.cargo;
+})();
+
+/* ─────────────────────────────────────────
+   CERRAR SESIÓN
+───────────────────────────────────────── */
+function cerrarSesion() {
+  if (!confirm('¿Deseas cerrar sesión?')) return;
+  sessionStorage.removeItem('pulsarx_sesion'); // Elimina la sesión
+  window.location.href = 'login.html'; // Redirige al login
+}
 
 /* ─────────────────────────────────────────
    INICIALIZACIÓN
